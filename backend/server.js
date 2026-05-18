@@ -2,16 +2,59 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const mongoSanitize = require("express-mongo-sanitize");
+const xss = require("xss-clean");
+const compression = require("compression");
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 dotenv.config();
+
+// Ensure critical env vars are present in production
+if (process.env.NODE_ENV === "production") {
+  if (!process.env.MONGO_URI) {
+    console.error("CRITICAL ERROR: Missing MONGO_URI environment variable!");
+    process.exit(1);
+  }
+}
+
 connectDB();
 
 const app = express();
 
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json());
+// Security Middlewares
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(xss());
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: "Too many requests from this IP, please try again after 15 minutes",
+});
+app.use("/api", limiter);
+
+// CORS configuration for production
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(",") 
+  : ["http://localhost:8080", "http://localhost:8081"];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
 app.get("/api", (req, res) => {
