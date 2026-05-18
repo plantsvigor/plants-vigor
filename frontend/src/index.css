@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Plants Vigor-inspired botanical design system. All colors HSL. */
+
+@layer base {
+  :root {
+    /* Warm cream paper background */
+    --background: 40 38% 97%;
+    --foreground: 140 30% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 140 30% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 30% 12%;
+
+    /* Deep forest green */
+    --primary: 142 38% 22%;
+    --primary-foreground: 40 38% 97%;
+    --primary-glow: 140 35% 35%;
+
+    /* Sage */
+    --secondary: 90 20% 92%;
+    --secondary-foreground: 142 38% 22%;
+
+    --muted: 40 25% 93%;
+    --muted-foreground: 140 10% 38%;
+
+    /* Sunny accent (matches plants vigor yellow circles) */
+    --accent: 45 95% 60%;
+    --accent-foreground: 142 38% 18%;
+
+    /* Terracotta highlight */
+    --terracotta: 18 55% 55%;
+    --terracotta-foreground: 40 38% 97%;
+
+    --destructive: 0 70% 48%;
+    --destructive-foreground: 40 38% 97%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 142 38% 22%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(180deg, hsl(40 38% 97% / 0) 0%, hsl(40 38% 97% / 0.8) 100%);
+    --gradient-leaf: linear-gradient(135deg, hsl(142 38% 22%) 0%, hsl(140 35% 35%) 100%);
+    --gradient-sun: radial-gradient(circle at center, hsl(45 95% 70%) 0%, hsl(45 95% 60%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -8px hsl(142 38% 22% / 0.15);
+    --shadow-card: 0 8px 30px -12px hsl(142 38% 22% / 0.2);
+    --shadow-glow: 0 0 40px hsl(140 35% 35% / 0.25);
+
+    /* Transitions */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 40 38% 97%;
+    --sidebar-foreground: 140 30% 12%;
+    --sidebar-primary: 142 38% 22%;
+    --sidebar-primary-foreground: 40 38% 97%;
+    --sidebar-accent: 90 20% 92%;
+    --sidebar-accent-foreground: 142 38% 22%;
+    --sidebar-border: 40 20% 88%;
+    --sidebar-ring: 142 38% 22%;
+  }
+
+  .dark {
+    --background: 140 25% 8%;
+    --foreground: 40 30% 95%;
+    --card: 140 22% 11%;
+    --card-foreground: 40 30% 95%;
+    --popover: 140 22% 11%;
+    --popover-foreground: 40 30% 95%;
+    --primary: 140 40% 65%;
+    --primary-foreground: 140 25% 8%;
+    --primary-glow: 140 40% 50%;
+    --secondary: 140 18% 18%;
+    --secondary-foreground: 40 30% 95%;
+    --muted: 140 18% 16%;
+    --muted-foreground: 40 12% 65%;
+    --accent: 45 80% 55%;
+    --accent-foreground: 140 25% 8%;
+    --terracotta: 18 50% 55%;
+    --terracotta-foreground: 40 30% 95%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 40 30% 95%;
+    --border: 140 18% 20%;
+    --input: 140 18% 20%;
+    --ring: 140 40% 65%;
+    --sidebar-background: 140 25% 8%;
+    --sidebar-foreground: 40 30% 95%;
+    --sidebar-primary: 140 40% 65%;
+    --sidebar-primary-foreground: 140 25% 8%;
+    --sidebar-accent: 140 18% 18%;
+    --sidebar-accent-foreground: 40 30% 95%;
+    --sidebar-border: 140 18% 20%;
+    --sidebar-ring: 140 40% 65%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  h1, h2, h3, h4, h5 {
+    @apply font-display tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .bg-gradient-leaf { background: var(--gradient-leaf); }
+  .bg-gradient-sun { background: var(--gradient-sun); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
+  .transition-smooth { transition: var(--transition-smooth); }
+  
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--secondary));
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  .futuristic-scrollbar::-webkit-scrollbar {
+    height: 4px;
+  }
+  .futuristic-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--secondary) / 0.3);
+    border-radius: 10px;
+  }
+  .futuristic-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+    border-radius: 10px;
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+  .futuristic-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)));
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.6s ease-out both; }
+.animate-marquee { animation: marquee 30s linear infinite; }
+.animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
