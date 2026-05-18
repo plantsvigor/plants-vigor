@@ -26,6 +26,8 @@ const app = express();
 // Security Middlewares
 app.use(helmet());
 app.use(mongoSanitize());
+const xss = require("xss-clean");
+app.use(xss());
 app.use(compression());
 
 // Rate limiting
