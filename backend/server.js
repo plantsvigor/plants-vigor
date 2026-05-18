@@ -57,6 +57,10 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
+app.get("/", (req, res) => {
+  res.json({ message: "Greenbloom API is running successfully." });
+});
+
 app.get("/api", (req, res) => {
   res.json({ message: "Welcome to the Greenbloom API" });
 });
