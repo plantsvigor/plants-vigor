@@ -5,7 +5,6 @@ const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
 const compression = require("compression");
 const connectDB = require("./config/db");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
@@ -27,7 +26,6 @@ const app = express();
 // Security Middlewares
 app.use(helmet());
 app.use(mongoSanitize());
-app.use(xss());
 app.use(compression());
 
 // Rate limiting
@@ -40,8 +38,8 @@ app.use("/api", limiter);
 
 // CORS configuration for production
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(",") 
-  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app"];
+  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim().replace(/\/$/, ""))
+  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app", "http://localhost:5173", "http://localhost:5174"];
 
 app.use(cors({
   origin: function(origin, callback) {
