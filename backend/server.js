@@ -41,7 +41,7 @@ app.use("/api", limiter);
 // CORS configuration for production
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(",") 
-  : ["http://localhost:8080", "http://localhost:8081"];
+  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app"];
 
 app.use(cors({
   origin: function(origin, callback) {
