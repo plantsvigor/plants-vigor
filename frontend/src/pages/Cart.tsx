@@ -12,11 +12,27 @@ export default function Cart() {
   const location = useLocation();
 
   const lines = items.map(i => {
-    const product = allProducts.find(p => p.id === i.productId);
+    const baseId = i.productId.split('_')[0];
+    const baseProduct = allProducts.find(p => p.id === baseId);
+    if (!baseProduct) return null;
+    
+    const isKrish = i.productId.includes('_krish');
+    const product = {
+      ...baseProduct,
+      id: i.productId,
+      name: isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name,
+      price: baseProduct.price + (isKrish ? 50 : 0),
+      discountPrice: (baseProduct.discountPrice && baseProduct.discountPrice > 0)
+        ? baseProduct.discountPrice + (isKrish ? 50 : 0)
+        : undefined
+    };
     return { ...i, product };
-  }).filter(l => l.product) as any[];
+  }).filter(Boolean) as any[];
 
-  const subtotal = lines.reduce((sum, l) => sum + (l.product.discountPrice ?? l.product.price) * l.qty, 0);
+  const subtotal = lines.reduce((sum, l) => {
+    const price = (l.product.discountPrice && l.product.discountPrice > 0) ? l.product.discountPrice : l.product.price;
+    return sum + price * l.qty;
+  }, 0);
   const delivery = subtotal === 0 ? 0 : subtotal >= 549 ? 0 : 50;
 
   const handleClose = () => {
@@ -60,7 +76,7 @@ export default function Cart() {
       <div className="grid lg:grid-cols-[1fr_380px] gap-10">
         <div className="space-y-4">
           {lines.map(({ product, qty }) => {
-            const price = product.discountPrice ?? product.price;
+            const price = (product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price;
             return (
               <div key={product.id} className="flex gap-4 rounded-2xl border p-3 sm:p-4 bg-card">
                 <Link to={`/product/${product.slug}`} className="shrink-0">

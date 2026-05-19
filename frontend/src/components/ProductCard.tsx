@@ -32,18 +32,25 @@ export default function ProductCard({ product, className }: { product: Product; 
     : (product.rating ?? 0);
 
   const handleAddToCart = async () => {
-    if (!user) {
-      toast.error("Please login to add items to cart");
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
     add(product);
     toast.success(`${product.name} added to cart`);
   };
 
   const handleBuyNow = async () => {
     if (!user) {
-      navigate("/login", { state: { from: location.pathname } });
+      toast.info("Please login first to checkout");
+      navigate("/login", { 
+        state: { 
+          from: "/checkout",
+          buyNowItem: {
+            productId: product.id,
+            name: product.name,
+            price: product.discountPrice ?? product.price,
+            image: product.images[0],
+            quantity: 1
+          }
+        } 
+      });
       return;
     }
     try {

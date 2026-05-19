@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "@/store/cart";
 import { useOrders } from "@/store/orders";
@@ -38,29 +38,69 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      toast.error("Please login first to checkout");
+      navigate("/login", { state: { from: "/checkout", buyNowItem } });
+    }
+  }, [user, navigate, buyNowItem]);
+
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user, email]);
+
+  useEffect(() => {
     if (addresses.length > 0 && !selectedAddressId) {
       const def = addresses.find(a => a.isDefault) || addresses[0];
       setSelectedAddressId(def._id!);
     }
   }, [addresses, selectedAddressId]);
 
-  const cartLines = items.map(i => {
-    const product = allProducts.find(p => p.id === i.productId);
-    return { ...i, product };
-  }).filter(l => l.product) as any[];
-  
-  const lines = buyNowItem 
-    ? [{ 
-        productId: buyNowItem.productId, 
-        qty: buyNowQty, 
-        product: {
-          id: buyNowItem.productId,
-          name: buyNowItem.name,
-          price: buyNowItem.price, // Already has the right price from backend
-          images: [buyNowItem.image]
-        }
-      }]
-    : cartLines;
+  const cartLines = useMemo(() => {
+    return items.map(i => {
+      const baseId = i.productId.split('_')[0];
+      const baseProduct = allProducts.find(p => p.id === baseId);
+      if (!baseProduct) return null;
+      
+      const isKrish = i.productId.includes('_krish');
+      const product = {
+        ...baseProduct,
+        id: i.productId,
+        name: isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name,
+        price: baseProduct.price + (isKrish ? 50 : 0),
+        discountPrice: (baseProduct.discountPrice && baseProduct.discountPrice > 0)
+          ? baseProduct.discountPrice + (isKrish ? 50 : 0)
+          : undefined
+      };
+      return { ...i, product };
+    }).filter(Boolean) as any[];
+  }, [items, allProducts]);
+
+  const lines = useMemo(() => {
+    if (!buyNowItem) return cartLines;
+    
+    const baseId = buyNowItem.productId.split('_')[0];
+    const baseProduct = allProducts.find(p => p.id === baseId);
+    if (!baseProduct) return [];
+    
+    const isKrish = buyNowItem.productId.includes('_krish');
+    const resolvedPrice = buyNowItem.price ?? (
+      ((baseProduct.discountPrice && baseProduct.discountPrice > 0) ? baseProduct.discountPrice : baseProduct.price) + (isKrish ? 50 : 0)
+    );
+    const resolvedImage = buyNowItem.image ?? baseProduct.images[0];
+    
+    return [{ 
+      productId: buyNowItem.productId, 
+      qty: buyNowQty, 
+      product: {
+        id: buyNowItem.productId,
+        name: buyNowItem.name ?? (isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name),
+        price: resolvedPrice,
+        images: [resolvedImage]
+      }
+    }];
+  }, [buyNowItem, buyNowQty, cartLines, allProducts]);
 
   const handleQty = (productId: string, newQty: number) => {
     if (newQty < 1) return;
@@ -72,7 +112,10 @@ export default function Checkout() {
   };
 
   const originalSubtotal = lines.reduce((s, l) => s + l.product.price * l.qty, 0);
-  const subtotal = lines.reduce((s, l) => s + (l.product.discountPrice ?? l.product.price) * l.qty, 0);
+  const subtotal = lines.reduce((s, l) => {
+    const price = (l.product.discountPrice && l.product.discountPrice > 0) ? l.product.discountPrice : l.product.price;
+    return s + price * l.qty;
+  }, 0);
   const discount = originalSubtotal - subtotal;
   const delivery = subtotal >= 549 ? 0 : 50;
   const total = subtotal + delivery;
@@ -195,7 +238,7 @@ export default function Checkout() {
           productId: l.productId, 
           name: l.product.name,
           image: l.product.images[0],
-          price: l.product.discountPrice ?? l.product.price,
+          price: (l.product.discountPrice && l.product.discountPrice > 0) ? l.product.discountPrice : l.product.price,
           quantity: l.qty 
         })), 
         subtotal, 
@@ -358,7 +401,7 @@ export default function Checkout() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold truncate text-base">{product.name}</div>
                   <div className="text-primary font-display font-medium text-sm">
-                    {formatINR(product.discountPrice ?? product.price)}
+                    {formatINR((product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price)}
                   </div>
                   <div className="flex items-center gap-3 mt-2">
                     <Button 
@@ -384,7 +427,7 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div className="font-display font-semibold text-lg">
-                  {formatINR((product.discountPrice ?? product.price) * qty)}
+                  {formatINR(((product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price) * qty)}
                 </div>
               </li>
             ))}

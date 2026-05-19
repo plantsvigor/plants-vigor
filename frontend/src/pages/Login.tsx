@@ -17,6 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
 
   const from = location.state?.from || "/";
+  const state = location.state || {};
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +25,7 @@ export default function Login() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      navigate(from, { replace: true });
+      navigate(from, { replace: true, state });
     } catch (err: any) {
       toast.error(err.message || "Failed to login");
     }
@@ -52,7 +53,7 @@ export default function Login() {
                 if (credentialResponse.credential) {
                   await loginGoogle(credentialResponse.credential);
                   toast.success("Signed in with Google");
-                  navigate(from, { replace: true });
+                  navigate(from, { replace: true, state });
                 }
               } catch (err: any) {
                 toast.error(err.message || "Failed to sign in with Google");

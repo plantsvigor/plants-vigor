@@ -18,6 +18,7 @@ export interface Product {
   discountPrice?: number;
   images: string[];
   category: CategorySlug;
+  subCategory?: string;
   description: string;
   stock: number;
   rating: number;

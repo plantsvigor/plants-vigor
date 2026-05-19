@@ -19,11 +19,11 @@ const Ctx = createContext<AuthCtx | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   useEffect(() => {
-    void api.get("/auth/me").then((data) => setUser(data.user || null)).catch(() => setUser(null));
+    void (api.get("/auth/me") as Promise<any>).then((data) => setUser(data.user || null)).catch(() => setUser(null));
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const u = await api.post("/auth/login", { email, password });
+    const u = await (api.post("/auth/login", { email, password }) as Promise<any>);
     setUser(u);
     return u;
   }, []);
@@ -31,12 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.post("/auth/send-otp", { email });
   }, []);
   const signup = useCallback(async (name: string, email: string, password: string, otp: string) => {
-    const u = await api.post("/auth/signup", { name, email, password, otp });
+    const u = await (api.post("/auth/signup", { name, email, password, otp }) as Promise<any>);
     setUser(u);
     return u;
   }, []);
   const loginGoogle = useCallback(async (credential: string) => {
-    const u = await api.post("/auth/google", { credential });
+    const u = await (api.post("/auth/google", { credential }) as Promise<any>);
     setUser(u);
     return u;
   }, []);
@@ -45,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
   const updateProfile = useCallback(async (name: string, phone: string) => {
-    const u = await api.put("/auth/profile", { name, phone });
+    const u = await (api.put("/auth/profile", { name, phone }) as Promise<any>);
     setUser(u);
     return u;
   }, []);

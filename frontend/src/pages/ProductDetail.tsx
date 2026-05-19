@@ -93,21 +93,48 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    if (!user) {
-      toast.error("Please login to add items to cart");
-      navigate("/login", { state: { from: location.pathname } });
-      return;
-    }
-    add(product, 1);
-    toast.success(`${product.name} added to cart`);
+    const isKrish = selectedPlanter === "krish";
+    const itemToAdd = {
+      ...product,
+      id: isKrish ? `${product.id}_krish` : product.id,
+      name: isKrish ? `${product.name} (Krish Planter)` : product.name,
+      price: product.price + (isKrish ? 50 : 0),
+      discountPrice: (product.discountPrice && product.discountPrice > 0)
+        ? product.discountPrice + (isKrish ? 50 : 0)
+        : undefined
+    };
+    add(itemToAdd, 1);
+    toast.success(`${isKrish ? `${product.name} with Krish Planter` : product.name} added to cart`);
   };
 
   const handleBuyNow = () => {
     if (!product) return;
+    const isKrish = selectedPlanter === "krish";
+    const finalProductId = isKrish ? `${product.id}_krish` : product.id;
+    const finalPrice = (product.discountPrice && product.discountPrice > 0) 
+      ? product.discountPrice + (isKrish ? 50 : 0) 
+      : product.price + (isKrish ? 50 : 0);
+      
+    if (!user) {
+      toast.info("Please login first to checkout");
+      navigate("/login", { 
+        state: { 
+          from: "/checkout",
+          buyNowItem: {
+            productId: finalProductId,
+            name: isKrish ? `${product.name} (Krish Planter)` : product.name,
+            price: finalPrice,
+            image: product.images[0],
+            quantity: 1
+          }
+        } 
+      });
+      return;
+    }
     navigate("/checkout", { 
       state: { 
         buyNowItem: {
-          productId: product.id,
+          productId: finalProductId,
           quantity: 1
         }
       } 

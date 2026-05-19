@@ -16,8 +16,16 @@ export default function Shop() {
       if (q.trim() && !(`${p.name} ${p.description}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });
-    if (sort === "price-asc") list = [...list].sort((a, b) => (a.discountPrice ?? a.price) - (b.discountPrice ?? b.price));
-    if (sort === "price-desc") list = [...list].sort((a, b) => (b.discountPrice ?? b.price) - (a.discountPrice ?? a.price));
+    if (sort === "price-asc") list = [...list].sort((a, b) => {
+      const pA = (a.discountPrice && a.discountPrice > 0) ? a.discountPrice : a.price;
+      const pB = (b.discountPrice && b.discountPrice > 0) ? b.discountPrice : b.price;
+      return pA - pB;
+    });
+    if (sort === "price-desc") list = [...list].sort((a, b) => {
+      const pA = (a.discountPrice && a.discountPrice > 0) ? a.discountPrice : a.price;
+      const pB = (b.discountPrice && b.discountPrice > 0) ? b.discountPrice : b.price;
+      return pB - pA;
+    });
     if (sort === "rating") list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
     return list;
   }, [products, q, cat, sort]);

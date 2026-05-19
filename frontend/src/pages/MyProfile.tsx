@@ -226,6 +226,7 @@ export default function MyProfile() {
               {isEditing ? (
                 <>
                   <Button 
+                    key="save-btn"
                     type="submit" 
                     disabled={profileLoading} 
                     className="flex-1 rounded-full h-11"
@@ -234,6 +235,7 @@ export default function MyProfile() {
                     Save Changes
                   </Button>
                   <Button 
+                    key="cancel-btn"
                     type="button" 
                     variant="outline" 
                     onClick={() => {
@@ -248,6 +250,7 @@ export default function MyProfile() {
                 </>
               ) : (
                 <Button 
+                  key="edit-btn"
                   type="button" 
                   onClick={() => setIsEditing(true)} 
                   className="flex-1 rounded-full h-11"

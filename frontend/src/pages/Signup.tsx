@@ -21,6 +21,7 @@ export default function Signup() {
   const [otp, setOtp] = useState("");
 
   const from = location.state?.from || "/";
+  const state = location.state || {};
 
   const handleSendOtp = async () => {
     if (name.trim().length < 2) { toast.error("Enter your name"); return; }
@@ -48,7 +49,7 @@ export default function Signup() {
     try {
       await signup(name, email, password, otp);
       toast.success("Account created successfully!");
-      navigate(from, { replace: true });
+      navigate(from, { replace: true, state });
     } catch (err: any) {
       toast.error(err.message || "Failed to create account");
     }
@@ -81,7 +82,7 @@ export default function Signup() {
                     if (credentialResponse.credential) {
                       await loginGoogle(credentialResponse.credential);
                       toast.success("Signed in with Google");
-                      navigate(from, { replace: true });
+                      navigate(from, { replace: true, state });
                     }
                   } catch (err: any) {
                     toast.error(err.message || "Failed to sign in with Google");
