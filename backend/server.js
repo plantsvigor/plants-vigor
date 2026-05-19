@@ -86,6 +86,13 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "greenbloom-backend" });
 });
 
+app.get("/api/config/keys", (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+    razorpayKeyId: process.env.RAZORPAY_KEY_ID || ""
+  });
+});
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/wishlist", require("./routes/wishlistRoutes"));

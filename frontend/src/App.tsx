@@ -32,56 +32,83 @@ import { AdminCatalogProvider } from "@/store/adminCatalog";
 import { AddressProvider } from "@/store/address";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+import { useState, useEffect } from "react";
+import { api } from "@/lib/api";
+
 const queryClient = new QueryClient();
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const App = () => {
+  const [keys, setKeys] = useState<{ googleClientId: string; razorpayKeyId: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const App = () => (
-  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <ScrollToTop />
-          <Toaster />
-          <Sonner position="top-center" />
-          <AuthProvider>
-            <AddressProvider>
-              <CartProvider>
-                  <WishlistProvider>
-                    <ReviewsProvider>
-                      <OrdersProvider>
-                        <AdminCatalogProvider>
-                          <Layout>
-                            <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/category/plants" element={<Shop />} />
-                            <Route path="/category/:slug" element={<CategoryPage />} />
-                            <Route path="/product/:slug" element={<ProductDetail />} />
-                            <Route path="/cart" element={<Cart />} />
-                            <Route path="/checkout" element={<Checkout />} />
-                            <Route path="/order/:id" element={<OrderConfirmed />} />
-                            <Route path="/track-order" element={<TrackOrder />} />
-                            <Route path="/wishlist" element={<Wishlist />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<Signup />} />
-                            <Route path="/orders" element={<MyOrders />} />
-                            <Route path="/profile" element={<MyProfile />} />
-                            <Route path="/plant-care-ai" element={<PlantCareAI />} />
-                            <Route path="/admin/*" element={<Admin />} />
-                            <Route path="*" element={<NotFound />} />
-                          </Routes>
-                        </Layout>
-                      </AdminCatalogProvider>
-                    </OrdersProvider>
-                  </ReviewsProvider>
-              </WishlistProvider>
-            </CartProvider>
-            </AddressProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </GoogleOAuthProvider>
-);
+  useEffect(() => {
+    (api.get("/config/keys") as Promise<any>).then((res) => {
+      setKeys(res);
+      (window as any).__APP_KEYS__ = res;
+    }).catch(err => {
+      console.error("Failed to load configuration keys:", err);
+    }).finally(() => {
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  const googleClientId = keys?.googleClientId || "";
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <BrowserRouter>
+            <ScrollToTop />
+            <Toaster />
+            <Sonner position="top-center" />
+            <AuthProvider>
+              <AddressProvider>
+                <CartProvider>
+                    <WishlistProvider>
+                      <ReviewsProvider>
+                        <OrdersProvider>
+                          <AdminCatalogProvider>
+                            <Layout>
+                              <Routes>
+                              <Route path="/" element={<Home />} />
+                              <Route path="/category/plants" element={<Shop />} />
+                              <Route path="/category/:slug" element={<CategoryPage />} />
+                              <Route path="/product/:slug" element={<ProductDetail />} />
+                              <Route path="/cart" element={<Cart />} />
+                              <Route path="/checkout" element={<Checkout />} />
+                              <Route path="/order/:id" element={<OrderConfirmed />} />
+                              <Route path="/track-order" element={<TrackOrder />} />
+                              <Route path="/wishlist" element={<Wishlist />} />
+                              <Route path="/login" element={<Login />} />
+                              <Route path="/signup" element={<Signup />} />
+                              <Route path="/orders" element={<MyOrders />} />
+                              <Route path="/profile" element={<MyProfile />} />
+                              <Route path="/plant-care-ai" element={<PlantCareAI />} />
+                              <Route path="/admin/*" element={<Admin />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </Layout>
+                        </AdminCatalogProvider>
+                      </OrdersProvider>
+                    </ReviewsProvider>
+                </WishlistProvider>
+              </CartProvider>
+              </AddressProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
+  );
+};
 
 export default App;

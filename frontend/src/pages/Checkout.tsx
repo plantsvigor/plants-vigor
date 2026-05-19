@@ -159,7 +159,7 @@ export default function Checkout() {
 
     return new Promise((resolve, reject) => {
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: (window as any).__APP_KEYS__?.razorpayKeyId || import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: "INR",
         name: "GreenBloom Co.",
