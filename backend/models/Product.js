@@ -21,11 +21,10 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.pre("save", function(next) {
+productSchema.pre("save", async function() {
   if (this.discountPrice && this.discountPrice >= this.price) {
-    return next(new Error("Offer Price (discountPrice) must be less than Actual Price (price)"));
+    throw new Error("Offer Price (discountPrice) must be less than Actual Price (price)");
   }
-  next();
 });
 
 module.exports = mongoose.model("Product", productSchema);
