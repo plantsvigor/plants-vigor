@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://plants-vigor.onrender.com/api";
+const API_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "https://plants-vigor.onrender.com/api";
 
 export function useBanners() {
   const { data: banners, isLoading } = useQuery({
