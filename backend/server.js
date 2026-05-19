@@ -23,8 +23,41 @@ connectDB();
 
 const app = express();
 
+// Add basic logging for origin headers
+app.use((req, res, next) => {
+  if (req.method !== 'OPTIONS') {
+    console.log(`[${req.method}] ${req.originalUrl} - Origin: ${req.headers.origin || 'none'}`);
+  }
+  next();
+});
+
+// CORS configuration for production
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim().replace(/\/$/, ""))
+  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app", "http://localhost:5173", "http://localhost:5174"];
+
+const corsOptions = {
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`Blocked by CORS: ${origin}`);
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle OPTIONS preflight
+
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resource sharing
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+}));
 app.use(mongoSanitize());
 const xss = require("xss-clean");
 app.use(xss());
@@ -37,22 +70,6 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again after 15 minutes",
 });
 app.use("/api", limiter);
-
-// CORS configuration for production
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim().replace(/\/$/, ""))
-  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app", "http://localhost:5173", "http://localhost:5174"];
-
-app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true
-}));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
