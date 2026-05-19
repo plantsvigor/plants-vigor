@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
-import { Heart, ShieldCheck, ShoppingBag, Star, Truck, ChevronDown, ChevronUp, Share2, Copy, Facebook, Twitter, Instagram, Info, Leaf, RotateCcw, FileText, Zap, Loader2 } from "lucide-react";
+import { Heart, ShieldCheck, ShoppingBag, Star, StarHalf, Truck, ChevronDown, ChevronUp, Share2, Copy, Facebook, Twitter, Instagram, Info, Leaf, RotateCcw, FileText, Zap, Loader2, Check } from "lucide-react";
 import { api } from "@/lib/api";
 import { 
   Accordion,
@@ -20,7 +20,6 @@ import { formatINR, products } from "@/data/catalog";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
-import { useRecent } from "@/store/recent";
 import { useReviews } from "@/store/reviews";
 import { useAuth } from "@/store/auth";
 import ProductCard from "@/components/ProductCard";
@@ -35,7 +34,6 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const { add } = useCart();
   const { has, toggle } = useWishlist();
-  const { push } = useRecent();
   const { forProduct, add: addReview } = useReviews();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +44,7 @@ export default function ProductDetail() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const [selectedPlanter, setSelectedPlanter] = useState<"gropot" | "krish">("gropot");
   const { products: allProducts } = useProducts();
 
   useEffect(() => {
@@ -117,12 +116,11 @@ export default function ProductDetail() {
 
   useEffect(() => { 
     if (product) {
-      push(product.id); 
       document.title = `${product.name} • Plants Vigor`;
     } else {
       document.title = "Plants Vigor";
     }
-  }, [product, push]);
+  }, [product]);
 
   if (loading) return (
     <div className="container py-20 text-center">
@@ -159,15 +157,21 @@ export default function ProductDetail() {
     }
   ];
 
-  const sellingPrice = (product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price;
-  const originalPrice = product.price;
+  const baseSellingPrice = (product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price;
+  const baseOriginalPrice = product.price;
+  
+  const additionalPrice = selectedPlanter === "krish" ? 50 : 0;
+  
+  const sellingPrice = baseSellingPrice + additionalPrice;
+  const originalPrice = baseOriginalPrice + additionalPrice;
+  
   const hasDiscount = (product.discountPrice && product.discountPrice > 0 && product.discountPrice !== product.price);
   const discount = (hasDiscount && originalPrice > 0) ? Math.round((1 - sellingPrice / originalPrice) * 100) : 0;
   const reviews = forProduct(product.id);
   const averageRating = reviews.length > 0 
     ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1))
-    : 0;
-  const reviewCount = reviews.length;
+    : (product.rating ?? 0);
+  const reviewCount = reviews.length > 0 ? reviews.length : (product.reviewsCount ?? 0);
   const related = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
   const isWish = has(product.id);
 
@@ -203,7 +207,7 @@ export default function ProductDetail() {
             />
             {discount > 0 && (
               <span className="absolute left-4 top-4 z-10 rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground shadow-sm">
-                SAVE {discount}%
+                {discount}% OFF
               </span>
             )}
             <Button 
@@ -240,17 +244,31 @@ export default function ProductDetail() {
           
           <div className="mt-3 flex items-center gap-2">
             <div className="flex items-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  className={cn(
-                    "h-4 w-4",
-                    star <= Math.round(averageRating)
-                      ? "fill-accent text-accent"
-                      : "text-muted-foreground/20"
-                  )}
-                />
-              ))}
+              {[1, 2, 3, 4, 5].map((star) => {
+                const ratingRounded = Math.round(averageRating * 2) / 2;
+                if (ratingRounded >= star) {
+                  return (
+                    <Star 
+                      key={star} 
+                      className="h-4 w-4 fill-accent text-accent" 
+                    />
+                  );
+                } else if (ratingRounded >= star - 0.5) {
+                  return (
+                    <StarHalf 
+                      key={star} 
+                      className="h-4 w-4 fill-accent text-accent" 
+                    />
+                  );
+                } else {
+                  return (
+                    <Star 
+                      key={star} 
+                      className="h-4 w-4 text-muted-foreground/20" 
+                    />
+                  );
+                }
+              })}
             </div>
             <span className="text-sm font-medium">{averageRating}</span>
             <span className="text-sm text-muted-foreground mx-1">•</span>
@@ -263,12 +281,77 @@ export default function ProductDetail() {
           </div>
 
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="font-display text-3xl font-semibold">{formatINR(sellingPrice)}</span>
+            <span className="font-display text-3xl font-semibold text-[#008744]">{formatINR(sellingPrice)}</span>
             {hasDiscount && (
               <span className="text-lg text-muted-foreground line-through">{formatINR(originalPrice)}</span>
             )}
           </div>
-          <p className="mt-5 text-muted-foreground leading-relaxed">{product.description}</p>
+          
+          {/* Select Planter Section */}
+          <div className="mt-6 sm:mt-8">
+            <h3 className="text-[13px] font-bold text-[#004d40] mb-3 uppercase tracking-wider">Select Planter</h3>
+            <div className="flex gap-4 mt-4">
+              {/* GroPot Option */}
+              <button
+                onClick={() => setSelectedPlanter("gropot")}
+                className={cn(
+                  "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
+                  selectedPlanter === "gropot" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
+                )}
+              >
+                {selectedPlanter === "gropot" && (
+                  <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-10 shadow-sm">
+                    <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-3 w-full pl-2">
+                  <div className="h-9 w-9 shrink-0 text-[#004d40]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-2 14H6L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-start flex-1">
+                    <span className="font-medium text-sm text-foreground tracking-wide">GroPot</span>
+                    <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice)}</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Krish Option */}
+              <button
+                onClick={() => setSelectedPlanter("krish")}
+                className={cn(
+                  "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
+                  selectedPlanter === "krish" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
+                )}
+              >
+                {/* Most Loved Badge */}
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FDE68A] text-[#004d40] text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap z-10">
+                  <Heart className="h-2.5 w-2.5 fill-red-500 text-red-500" />
+                  Most Loved
+                </div>
+                
+                {selectedPlanter === "krish" && (
+                  <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-20 shadow-sm">
+                    <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-3 w-full pl-2 mt-1">
+                  <div className="h-9 w-9 shrink-0 text-[#004d40]">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-1 12H5L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2m-6 13h-4v2h4v-2z" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-start flex-1">
+                    <span className="font-medium text-sm text-foreground tracking-wide">Krish</span>
+                    <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice + 50)}</span>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-6 text-muted-foreground leading-relaxed">{product.description}</p>
 
           <div className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 mt-6 sm:mt-8 pointer-events-none">
             <div className="container md:p-0 pointer-events-auto">
@@ -425,9 +508,31 @@ export default function ProductDetail() {
             <h2 className="font-display text-4xl mb-4">Customer Reviews</h2>
             <div className="flex items-center gap-2 mb-6">
               <div className="flex text-accent">
-                {[1, 2, 3, 4, 5].map(n => (
-                  <Star key={n} className={cn("h-5 w-5", n <= Math.round(averageRating) ? "fill-current" : "text-muted-foreground")} />
-                ))}
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const ratingRounded = Math.round(averageRating * 2) / 2;
+                  if (ratingRounded >= star) {
+                    return (
+                      <Star 
+                        key={star} 
+                        className="h-5 w-5 fill-current" 
+                      />
+                    );
+                  } else if (ratingRounded >= star - 0.5) {
+                    return (
+                      <StarHalf 
+                        key={star} 
+                        className="h-5 w-5 fill-current" 
+                      />
+                    );
+                  } else {
+                    return (
+                      <Star 
+                        key={star} 
+                        className="h-5 w-5 text-muted-foreground" 
+                      />
+                    );
+                  }
+                })}
               </div>
               <span className="font-medium text-lg">{averageRating} out of 5</span>
             </div>

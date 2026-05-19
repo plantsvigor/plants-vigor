@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Heart, ShoppingBag, Star, Zap } from "lucide-react";
+import { Heart, ShoppingBag, Star, StarHalf, Zap } from "lucide-react";
 import { Product, formatINR } from "@/data/catalog";
 import { useCart } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
 import { useAuth } from "@/store/auth";
+import { useReviews } from "@/store/reviews";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ export default function ProductCard({ product, className }: { product: Product; 
   const { add } = useCart();
   const { has, toggle } = useWishlist();
   const { user } = useAuth();
+  const { forProduct } = useReviews();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,6 +24,12 @@ export default function ProductCard({ product, className }: { product: Product; 
   const originalPrice = product.price;
   const hasDiscount = (product.discountPrice && product.discountPrice > 0 && product.discountPrice !== product.price);
   const discountPct = (hasDiscount && originalPrice > 0) ? Math.round((1 - sellingPrice / originalPrice) * 100) : 0;
+
+  const reviews = forProduct(product.id);
+  const reviewCount = reviews.length > 0 ? reviews.length : (product.reviewsCount || 0);
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+    : (product.rating ?? 0);
 
   const handleAddToCart = async () => {
     if (!user) {
@@ -52,11 +60,11 @@ export default function ProductCard({ product, className }: { product: Product; 
 
   return (
     <div 
-      className={cn("group relative flex flex-col rounded-xl bg-card shadow-soft hover:shadow-card transition-smooth overflow-hidden", className)}
+      className={cn("group relative flex flex-col transition-smooth max-w-[260px] mx-auto w-full", className)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/product/${product.slug}`} className="relative block aspect-[4/3] sm:aspect-[5/4] overflow-hidden bg-secondary/50">
+      <Link to={`/product/${product.slug}`} className="relative block aspect-square overflow-hidden rounded-2xl">
         <img
           src={images[0]}
           alt={product.name}
@@ -78,12 +86,12 @@ export default function ProductCard({ product, className }: { product: Product; 
           />
         )}
         {discountPct > 0 && (
-          <span className="absolute left-2 top-2 z-10 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
-            -{discountPct}%
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-foreground shadow-sm">
+            {discountPct}% OFF
           </span>
         )}
         {product.bestSeller && (
-          <span className="absolute left-2 bottom-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+          <span className="absolute left-3 bottom-3 z-10 rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground">
             Bestseller
           </span>
         )}
@@ -94,36 +102,63 @@ export default function ProductCard({ product, className }: { product: Product; 
         onClick={(e) => { e.preventDefault(); toggle(product.id); toast(isWish ? "Removed from wishlist" : "Added to wishlist"); }}
         aria-label="Wishlist"
         className={cn(
-          "absolute top-2 right-2 grid h-8 w-8 place-items-center rounded-full bg-background/90 shadow-soft transition-smooth hover:scale-110",
+          "absolute top-3 right-3 z-20 grid h-8 w-8 place-items-center rounded-full bg-background/90 shadow-soft transition-smooth hover:scale-110",
           isWish ? "text-destructive" : "text-foreground/60"
         )}
       >
-        <Heart className={cn("h-3.5 w-3.5", isWish && "fill-current")} />
+        <Heart className={cn("h-4 w-4", isWish && "fill-current")} />
       </button>
 
-      <div className="flex flex-1 flex-col p-3">
+      <div className="flex flex-1 flex-col pt-4 px-1 text-center">
         <Link to={`/product/${product.slug}`}>
-          <h3 className="font-display text-base leading-tight line-clamp-2">{product.name}</h3>
+          <h3 className="font-display text-[15px] leading-tight line-clamp-2 text-foreground/90">{product.name}</h3>
         </Link>
-        <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
-          <Star className="h-3 w-3 fill-accent text-accent" />
-          <span className="font-medium text-foreground">{product.rating}</span>
-          <span>({product.reviewsCount})</span>
+        
+        <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[13px] text-muted-foreground">
+          <div className="flex">
+            {[1, 2, 3, 4, 5].map((star) => {
+              const ratingRounded = Math.round(averageRating * 2) / 2;
+              if (ratingRounded >= star) {
+                return (
+                  <Star 
+                    key={star} 
+                    className="h-3 w-3 fill-accent text-accent" 
+                  />
+                );
+              } else if (ratingRounded >= star - 0.5) {
+                return (
+                  <StarHalf 
+                    key={star} 
+                    className="h-3 w-3 fill-accent text-accent" 
+                  />
+                );
+              } else {
+                return (
+                  <Star 
+                    key={star} 
+                    className="h-3 w-3 text-gray-300" 
+                  />
+                );
+              }
+            })}
+          </div>
+          <span>({reviewCount})</span>
         </div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-lg font-semibold">{formatINR(sellingPrice)}</span>
+        
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <span className="text-[15px] font-medium text-black">Rs. {sellingPrice}.00</span>
           {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through">{formatINR(originalPrice)}</span>
+            <span className="text-[13px] text-muted-foreground line-through">Rs. {originalPrice}.00</span>
           )}
         </div>
         
-        <div className="mt-auto pt-3">
+        <div className="mt-4 pb-2">
           <Button
             onClick={handleAddToCart}
-            className="w-full rounded-full text-[11px] h-9"
-            size="sm"
+            variant="outline"
+            className="w-full rounded-[14px] border-gray-400 text-[#111] hover:bg-gray-50 h-[42px] text-[15px] font-normal"
           >
-            <ShoppingBag className="mr-1.5 h-3.5 w-3.5" /> Add to Cart
+            Add to cart
           </Button>
         </div>
       </div>

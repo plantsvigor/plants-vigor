@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, ReactNode 
 import { api } from "@/lib/api";
 
 export type Role = "customer" | "admin";
-export interface User { id: string; email: string; name: string; role: Role; }
+export interface User { id: string; email: string; name: string; role: Role; phone?: string; }
 
 interface AuthCtx {
   user: User | null;
@@ -11,6 +11,7 @@ interface AuthCtx {
   signup: (name: string, email: string, password: string, otp: string) => Promise<User>;
   loginGoogle: (credential: string) => Promise<User>;
   logout: () => void;
+  updateProfile: (name: string, phone: string) => Promise<User>;
 }
 const Ctx = createContext<AuthCtx | null>(null);
 
@@ -43,8 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void api.post("/auth/logout").catch(() => undefined);
     setUser(null);
   }, []);
+  const updateProfile = useCallback(async (name: string, phone: string) => {
+    const u = await api.put("/auth/profile", { name, phone });
+    setUser(u);
+    return u;
+  }, []);
 
-  return <Ctx.Provider value={{ user, login, sendOtp, signup, loginGoogle, logout }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ user, login, sendOtp, signup, loginGoogle, logout, updateProfile }}>{children}</Ctx.Provider>;
 }
 export const useAuth = () => {
   const c = useContext(Ctx);

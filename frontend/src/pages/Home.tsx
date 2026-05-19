@@ -200,7 +200,7 @@ export default function Home() {
             {[1, 2, 3, 4].map(i => <div key={i} className="aspect-[4/5] rounded-3xl bg-secondary animate-pulse" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3">
             {featured.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}
@@ -239,7 +239,7 @@ export default function Home() {
             {[1, 2, 3, 4].map(i => <div key={i} className="aspect-[4/5] rounded-3xl bg-secondary animate-pulse" />)}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-3">
             {bestsellers.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}

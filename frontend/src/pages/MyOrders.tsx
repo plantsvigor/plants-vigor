@@ -147,7 +147,7 @@ export default function MyOrders() {
                   Ordered at {new Date(order.createdAt).toLocaleTimeString("en-IN", { hour: '2-digit', minute: '2-digit' })}
                 </p>
                 <Button asChild variant="outline" size="sm" className="rounded-full">
-                  <Link to={`/account/track-order?id=${order.id}`}>
+                  <Link to={`/track-order?id=${order.id}`}>
                     Track Order <ChevronRight className="ml-2 h-3 w-3" />
                   </Link>
                 </Button>

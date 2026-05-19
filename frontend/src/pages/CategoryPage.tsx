@@ -83,7 +83,7 @@ export default function CategoryPage() {
         {sortedList.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">No products in this category yet.</p>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-4">
             {sortedList.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}

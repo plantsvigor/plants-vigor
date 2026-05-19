@@ -46,8 +46,8 @@ export default function Footer() {
         <div>
           <h4 className="text-sm font-semibold mb-4">Help</h4>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/track" className="hover:text-primary">Track Order</Link></li>
-            <li><Link to="/account" className="hover:text-primary">My Account</Link></li>
+            <li><Link to="/track-order" className="hover:text-primary">Track Order</Link></li>
+            <li><Link to="/orders" className="hover:text-primary">My Orders</Link></li>
             <li><a href="#" className="hover:text-primary">Shipping & Returns</a></li>
             <li><a href="#" className="hover:text-primary">Plant Care Guide</a></li>
             <li><a href="#" className="hover:text-primary">Contact us</a></li>

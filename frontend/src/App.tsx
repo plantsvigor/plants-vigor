@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ScrollToTop from "@/components/ScrollToTop";
 
 import Layout from "@/components/layout/Layout";
 import Home from "@/pages/Home";
@@ -16,15 +17,14 @@ import TrackOrder from "@/pages/TrackOrder";
 import Wishlist from "@/pages/Wishlist";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
-import Account from "@/pages/Account";
 import MyOrders from "@/pages/MyOrders";
 import Admin from "@/pages/Admin";
 import PlantCareAI from "@/pages/PlantCareAI";
 import NotFound from "@/pages/NotFound";
+import MyProfile from "@/pages/MyProfile";
 
 import { CartProvider } from "@/store/cart";
 import { WishlistProvider } from "@/store/wishlist";
-import { RecentProvider } from "@/store/recent";
 import { AuthProvider } from "@/store/auth";
 import { OrdersProvider } from "@/store/orders";
 import { ReviewsProvider } from "@/store/reviews";
@@ -41,13 +41,13 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <Toaster />
           <Sonner position="top-center" />
           <AuthProvider>
             <AddressProvider>
               <CartProvider>
-                <WishlistProvider>
-                  <RecentProvider>
+                  <WishlistProvider>
                     <ReviewsProvider>
                       <OrdersProvider>
                         <AdminCatalogProvider>
@@ -60,13 +60,12 @@ const App = () => (
                             <Route path="/cart" element={<Cart />} />
                             <Route path="/checkout" element={<Checkout />} />
                             <Route path="/order/:id" element={<OrderConfirmed />} />
-                            <Route path="/account/track-order" element={<TrackOrder />} />
+                            <Route path="/track-order" element={<TrackOrder />} />
                             <Route path="/wishlist" element={<Wishlist />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
-                            <Route path="/account" element={<Account />} />
-                            <Route path="/account/orders" element={<MyOrders />} />
                             <Route path="/orders" element={<MyOrders />} />
+                            <Route path="/profile" element={<MyProfile />} />
                             <Route path="/plant-care-ai" element={<PlantCareAI />} />
                             <Route path="/admin/*" element={<Admin />} />
                             <Route path="*" element={<NotFound />} />
@@ -75,7 +74,6 @@ const App = () => (
                       </AdminCatalogProvider>
                     </OrdersProvider>
                   </ReviewsProvider>
-                </RecentProvider>
               </WishlistProvider>
             </CartProvider>
             </AddressProvider>

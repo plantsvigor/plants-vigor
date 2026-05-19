@@ -197,9 +197,9 @@ export default function Header() {
                     <div className="text-xs text-muted-foreground">{user.email}</div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link to="/account">My account</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/account/orders">My orders</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/account/track-order">Track order</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/profile">My profile</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/orders">My orders</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/track-order">Track order</Link></DropdownMenuItem>
                   {user.role === "admin" && <DropdownMenuItem asChild><Link to="/admin">Admin panel</Link></DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
@@ -209,7 +209,7 @@ export default function Header() {
                   <DropdownMenuItem asChild><Link to="/login">Login</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/signup">Create account</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link to="/account/track-order"><Package className="mr-2 h-4 w-4" />Track an order</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link to="/track-order"><Package className="mr-2 h-4 w-4" />Track an order</Link></DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>

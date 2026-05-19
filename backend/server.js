@@ -89,7 +89,6 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/cart", require("./routes/cartRoutes"));
 app.use("/api/wishlist", require("./routes/wishlistRoutes"));
-app.use("/api/recent", require("./routes/recentRoutes"));
 app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/admin-catalog", require("./routes/adminCatalogRoutes"));

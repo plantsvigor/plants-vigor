@@ -53,7 +53,7 @@ export default function Shop() {
             <p className="font-display text-2xl mb-2 text-muted-foreground/60">No plants match your search</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-4">
             {filtered.map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         )}

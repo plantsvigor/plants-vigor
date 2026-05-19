@@ -26,6 +26,7 @@ const toResponseUser = (user) => ({
   email: user.email,
   name: user.name,
   role: user.role,
+  phone: user.phone || "",
 });
 
 const roleFromEmail = (email) => (email.toLowerCase().includes("admin") ? "admin" : "customer");
@@ -202,4 +203,136 @@ const logout = async (req, res) => {
   res.json({ message: "Logged out successfully" });
 };
 
-module.exports = { login, signup, sendOtp, loginGoogle, getCurrent, logout };
+const updateProfile = async (req, res, next) => {
+  try {
+    const { name, phone } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (name !== undefined) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    await user.save();
+    res.json(toResponseUser(user));
+  } catch (err) {
+    next(err);
+  }
+};
+
+const changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old password and new password are required" });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!user.password) {
+      return res.status(400).json({ message: "This account was created with Google and doesn't have a password. You can set a password using the Forgot Password flow." });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect old password" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const sendForgotPasswordOTP = async (req, res, next) => {
+  try {
+    const email = req.user.email;
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await OTP.deleteMany({ email: normalizedEmail });
+    await OTP.create({
+      email: normalizedEmail,
+      otp: otpCode
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Plants Vigor" <${process.env.EMAIL_USER}>`,
+      to: normalizedEmail,
+      subject: "Password Reset Verification OTP",
+      text: `Your password reset OTP is: ${otpCode}. Please use this to reset your password.`,
+    });
+
+    res.status(200).json({ message: "OTP sent to your email" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const resetForgottenPassword = async (req, res, next) => {
+  try {
+    const { otp, newPassword } = req.body;
+    if (!otp || !newPassword) {
+      return res.status(400).json({ message: "OTP and new password are required" });
+    }
+
+    const email = req.user.email;
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const otpRecord = await OTP.findOne({ email: normalizedEmail });
+    if (!otpRecord) {
+      return res.status(400).json({ message: "OTP expired or invalid" });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({ message: "Incorrect OTP" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.password = hashedPassword;
+    await user.save();
+
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { 
+  login, 
+  signup, 
+  sendOtp, 
+  loginGoogle, 
+  getCurrent, 
+  logout, 
+  updateProfile, 
+  changePassword, 
+  sendForgotPasswordOTP, 
+  resetForgottenPassword 
+};
