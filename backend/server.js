@@ -32,12 +32,12 @@ app.use((req, res, next) => {
 });
 
 // CORS configuration for production
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim().replace(/\/$/, ""))
-  : ["https://plants-vigor.vercel.app", "https://plants-vigor-nine.vercel.app"];
+  : ["https://plants-vigor.vercel.app", "https://plants-vigor-3igx.vercel.app"];
 
 const corsOptions = {
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
