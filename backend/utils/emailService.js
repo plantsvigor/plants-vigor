@@ -1,20 +1,55 @@
-const { Resend } = require("resend");
+const nodemailer = require("nodemailer");
 
-const resendApiKey = process.env.RESEND_API_KEY;
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
 
-if (!resendApiKey) {
+if (!emailUser || !emailPass) {
   console.warn(
-    "⚠️ WARNING: RESEND_API_KEY environment variable is missing! " +
-    "Emails will not be sent successfully."
+    "⚠️ WARNING: EMAIL_USER or EMAIL_PASS environment variable is missing! " +
+    "Nodemailer Gmail SMTP routing will fail."
   );
 }
 
-// Initialize Resend Client
-const resend = new Resend(resendApiKey);
+// Initialize Nodemailer SMTP Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  pool: true, // Enable connection pooling
+  maxConnections: 5, // Concurrent connections
+  maxMessages: 100, // Messages per connection
+  auth: {
+    user: emailUser,
+    pass: emailPass,
+  },
+});
 
 /**
- * Base helper function to send an email using Resend API.
+ * Diagnostic method to verify the SMTP connection health.
+ * Prints detailed error diagnostics for auth failures or network timeouts.
+ */
+const verifyConnection = async () => {
+  console.log("🔄 Verifying Gmail SMTP Transporter connection pool...");
+  try {
+    await transporter.verify();
+    console.log("✅ Gmail SMTP Service: Initialized, authenticated, and ready to send emails!");
+    return true;
+  } catch (error) {
+    console.error("❌ Gmail SMTP Service Connection Failure:");
+    if (error.code === "EAUTH") {
+      console.error(
+        "   👉 Authentication Error! Please verify that process.env.EMAIL_USER is correct " +
+        "and process.env.EMAIL_PASS is a valid 16-character Google App Password (not your primary password)."
+      );
+    } else {
+      console.error(`   👉 Details: ${error.message || error}`);
+    }
+    return false;
+  }
+};
+
+/**
+ * Base helper function to send an email using Nodemailer SMTP.
  * @param {Object} options
+ * @param {string} [options.from] - Sender address
  * @param {string} options.to - Recipient email address
  * @param {string} options.subject - Email subject
  * @param {string} [options.html] - HTML content
@@ -22,18 +57,13 @@ const resend = new Resend(resendApiKey);
  * @returns {Promise<Object>}
  */
 const sendEmail = async ({ from, to, subject, html, text }) => {
-  if (!resendApiKey) {
-    console.error("❌ Resend API: Attempted to send email but RESEND_API_KEY is missing.");
-    throw new Error("Email service is not configured (missing Resend API key).");
-  }
-
   // Standard requested sender address
-  const sender = from || process.env.EMAIL_FROM || "Plant Store <plantsvigor@gmail.com>";
+  const sender = from || process.env.EMAIL_FROM || `"Plants Vigroe" <plantsvigroe@gmail.com>`;
 
   try {
-    console.log(`[Resend] Dispatching email from: ${sender} | to: ${to} | Subject: "${subject}"...`);
+    console.log(`[SMTP] Dispatching email from: ${sender} | to: ${to} | Subject: "${subject}"...`);
     
-    const response = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: sender,
       to,
       subject,
@@ -41,20 +71,16 @@ const sendEmail = async ({ from, to, subject, html, text }) => {
       text: text || "",
     });
 
-    if (response.error) {
-      console.error(`[Resend Error] API returned a delivery error:`, response.error);
-      throw new Error(`Resend email sending failed: ${response.error.message || JSON.stringify(response.error)}`);
-    }
-
-    console.log(`[Resend Success] Email sent successfully to ${to}. ID: ${response.data?.id || "N/A"}`);
-    return response.data;
+    console.log(`[SMTP Success] Email sent successfully to ${to}. MessageID: ${info.messageId}`);
+    return info;
   } catch (error) {
-    console.error(`[Resend Exception] Error sending email to ${to}:`, error);
+    console.error(`[SMTP Exception] Error sending email to ${to}:`, error);
     throw error;
   }
 };
 
 module.exports = {
-  resend,
+  transporter,
+  verifyConnection,
   sendEmail,
 };

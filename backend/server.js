@@ -21,15 +21,10 @@ if (process.env.NODE_ENV === "production") {
 
 connectDB();
 
-// Ensure Resend API Key is present for production mail routing
-if (!process.env.RESEND_API_KEY) {
-  console.warn(
-    "⚠️ WARNING: RESEND_API_KEY is missing in the environment variables! " +
-    "All verification and notification emails will fail to send."
-  );
-} else {
-  console.log("📨 Resend API: Email routing service is verified and active.");
-}
+const { verifyConnection } = require("./utils/emailService");
+
+// Diagnostic verification of Gmail SMTP on server bootup
+verifyConnection();
 
 const app = express();
 
