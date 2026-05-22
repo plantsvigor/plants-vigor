@@ -1,4 +1,5 @@
 const { Order, orderStatusEnum } = require("../models/Order");
+const { sendOrderConfirmation, sendAdminOrderAlert } = require("../services/sendNotification");
 
 const serialize = (doc) => ({
   id: doc.orderCode,
@@ -60,6 +61,15 @@ const createOrder = async (req, res) => {
     createdAtMs: now,
     history: [{ status: "Pending", at: now }],
   });
+
+  // Asynchronously trigger customer confirmation and admin alert
+  try {
+    sendOrderConfirmation(order);
+    sendAdminOrderAlert(order);
+  } catch (notifyErr) {
+    console.error(`[ORDER] Background dispatch notification error:`, notifyErr);
+  }
+
   res.status(201).json(serialize(order));
 };
 

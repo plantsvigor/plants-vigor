@@ -1,7 +1,8 @@
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const bcrypt = require("bcryptjs");
-const { transporter } = require("../config/nodemailer");
+const { sendSignupOTP, sendRecoveryOTP } = require("../services/sendOTP");
+const { sendWelcomeEmail } = require("../services/sendNotification");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 
@@ -47,18 +48,6 @@ const sendOtp = async (req, res, next) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Verify SMTP connection prior to database changes or sending
-    console.log("[OTP] Verifying SMTP connection...");
-    try {
-      await transporter.verify();
-      console.log("[OTP] SMTP connection verified successfully.");
-    } catch (verifyError) {
-      console.error("[OTP] SMTP Transporter verification failed prior to sending:", verifyError);
-      return res.status(500).json({ 
-        message: "Failed to establish a connection with the email server. Please check SMTP settings or try again later." 
-      });
-    }
-
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     console.log(`[OTP] Storing OTP for ${normalizedEmail} in database...`);
@@ -69,27 +58,8 @@ const sendOtp = async (req, res, next) => {
       createdAt: new Date() // Force fresh date
     });
 
-    const emailUser = process.env.EMAIL_USER;
-    console.log(`[OTP] Sending OTP email to ${normalizedEmail} from ${emailUser}...`);
-    
-    await transporter.sendMail({
-      from: `"Greenbloom" <${emailUser}>`,
-      to: normalizedEmail,
-      subject: "Verify your email",
-      text: `Your OTP is: ${otpCode}. It is valid for 5 minutes.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #008744; text-align: center;">Welcome to Greenbloom!</h2>
-          <p>Thank you for signing up. Please verify your email address by entering the following One-Time Password (OTP):</p>
-          <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; margin: 20px 0; border-radius: 5px;">
-            ${otpCode}
-          </div>
-          <p style="font-size: 13px; color: #666;">This OTP is valid for <strong>5 minutes</strong>. If you did not request this code, please ignore this email.</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Plants Vigor / Greenbloom. All rights reserved.</p>
-        </div>
-      `
-    });
+    console.log(`[OTP] Sending OTP email to ${normalizedEmail} via Resend...`);
+    await sendSignupOTP(normalizedEmail, otpCode);
 
     console.log(`[OTP] OTP email successfully sent to ${normalizedEmail}`);
     res.status(200).json({ message: "OTP sent to your email" });
@@ -151,6 +121,13 @@ const signup = async (req, res, next) => {
     await OTP.deleteOne({ _id: otpRecord._id });
     console.log(`[SIGNUP] User account created successfully for: ${normalizedEmail} (ID: ${user._id})`);
     
+    // Asynchronously send the Welcome Email (it handles its own errors silently/log-only)
+    try {
+      sendWelcomeEmail(normalizedEmail, user.name);
+    } catch (welcomeErr) {
+      console.error(`[SIGNUP] Background Welcome email dispatch error:`, welcomeErr);
+    }
+
     generateToken(res, user._id);
     res.status(201).json(toResponseUser(user));
   } catch (err) {
@@ -302,18 +279,6 @@ const sendForgotPasswordOTP = async (req, res, next) => {
     
     console.log(`[FORGOT PASSWORD] Initiating password reset OTP for logged in user: ${normalizedEmail}`);
 
-    // Verify SMTP connection prior to sending
-    console.log("[FORGOT PASSWORD] Verifying SMTP connection...");
-    try {
-      await transporter.verify();
-      console.log("[FORGOT PASSWORD] SMTP connection verified successfully.");
-    } catch (verifyError) {
-      console.error("[FORGOT PASSWORD] SMTP Transporter verification failed prior to sending:", verifyError);
-      return res.status(500).json({ 
-        message: "Failed to establish a connection with the email server. Please check SMTP settings or try again later." 
-      });
-    }
-
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     console.log(`[FORGOT PASSWORD] Storing OTP in database...`);
@@ -324,27 +289,8 @@ const sendForgotPasswordOTP = async (req, res, next) => {
       createdAt: new Date()
     });
 
-    const emailUser = process.env.EMAIL_USER;
-    console.log(`[FORGOT PASSWORD] Sending reset OTP email to ${normalizedEmail} from ${emailUser}...`);
-    
-    await transporter.sendMail({
-      from: `"Plants Vigor" <${emailUser}>`,
-      to: normalizedEmail,
-      subject: "Password Reset Verification OTP",
-      text: `Your password reset OTP is: ${otpCode}. It is valid for 5 minutes.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #008744; text-align: center;">Reset Your Password</h2>
-          <p>We received a request to reset the password for your account. Please use the following One-Time Password (OTP) to complete the reset process:</p>
-          <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; margin: 20px 0; border-radius: 5px;">
-            ${otpCode}
-          </div>
-          <p style="font-size: 13px; color: #666;">This OTP is valid for <strong>5 minutes</strong>. If you did not request a password reset, please secure your account immediately.</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-          <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Plants Vigor. All rights reserved.</p>
-        </div>
-      `
-    });
+    console.log(`[FORGOT PASSWORD] Sending reset OTP email to ${normalizedEmail} via Resend...`);
+    await sendRecoveryOTP(normalizedEmail, otpCode);
 
     console.log(`[FORGOT PASSWORD] Reset OTP email successfully sent to ${normalizedEmail}`);
     res.status(200).json({ message: "OTP sent to your email" });

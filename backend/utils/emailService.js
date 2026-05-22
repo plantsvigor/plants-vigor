@@ -21,20 +21,20 @@ const resend = new Resend(resendApiKey);
  * @param {string} [options.text] - Plain text content
  * @returns {Promise<Object>}
  */
-const sendEmail = async ({ to, subject, html, text }) => {
+const sendEmail = async ({ from, to, subject, html, text }) => {
   if (!resendApiKey) {
     console.error("❌ Resend API: Attempted to send email but RESEND_API_KEY is missing.");
     throw new Error("Email service is not configured (missing Resend API key).");
   }
 
   // Standard requested sender address
-  const from = process.env.EMAIL_FROM || "Plant Store <plantsvigor@gmail.com>";
+  const sender = from || process.env.EMAIL_FROM || "Plant Store <plantsvigor@gmail.com>";
 
   try {
-    console.log(`[Resend] Dispatching email to: ${to} | Subject: "${subject}"...`);
+    console.log(`[Resend] Dispatching email from: ${sender} | to: ${to} | Subject: "${subject}"...`);
     
     const response = await resend.emails.send({
-      from,
+      from: sender,
       to,
       subject,
       html: html || text,
