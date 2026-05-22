@@ -11,6 +11,8 @@ const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 dotenv.config();
 
+const { verifyConnection } = require("./config/nodemailer");
+
 // Ensure critical env vars are present in production
 if (process.env.NODE_ENV === "production") {
   if (!process.env.MONGO_URI) {
@@ -20,6 +22,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 connectDB();
+verifyConnection(); // Diagnostic verification of Gmail SMTP on server bootup
 
 const app = express();
 
@@ -70,6 +73,17 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again after 15 minutes",
 });
 app.use("/api", limiter);
+
+// Dedicated rate limiter for OTP endpoints to prevent email exhaustion/abuse
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes window
+  max: 5, // limit each IP to 5 requests per window
+  message: { message: "Too many OTP requests. Please try again after 10 minutes." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/auth/send-otp", otpLimiter);
+app.use("/api/auth/forgot-password-otp", otpLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());

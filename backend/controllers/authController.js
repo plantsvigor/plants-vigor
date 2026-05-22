@@ -1,7 +1,7 @@
 const User = require("../models/User");
 const OTP = require("../models/OTP");
 const bcrypt = require("bcryptjs");
-const nodemailer = require("nodemailer");
+const { transporter } = require("../config/nodemailer");
 const { OAuth2Client } = require("google-auth-library");
 const jwt = require("jsonwebtoken");
 
@@ -39,36 +39,62 @@ const sendOtp = async (req, res, next) => {
     }
     
     const normalizedEmail = email.trim().toLowerCase();
+    console.log(`[OTP] Initiating OTP generation for: ${normalizedEmail}`);
+
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      console.warn(`[OTP] Signup blocked: User already exists for ${normalizedEmail}`);
       return res.status(400).json({ message: "User already exists" });
+    }
+
+    // Verify SMTP connection prior to database changes or sending
+    console.log("[OTP] Verifying SMTP connection...");
+    try {
+      await transporter.verify();
+      console.log("[OTP] SMTP connection verified successfully.");
+    } catch (verifyError) {
+      console.error("[OTP] SMTP Transporter verification failed prior to sending:", verifyError);
+      return res.status(500).json({ 
+        message: "Failed to establish a connection with the email server. Please check SMTP settings or try again later." 
+      });
     }
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    console.log(`[OTP] Storing OTP for ${normalizedEmail} in database...`);
     await OTP.deleteMany({ email: normalizedEmail });
     await OTP.create({
       email: normalizedEmail,
-      otp: otpCode
+      otp: otpCode,
+      createdAt: new Date() // Force fresh date
     });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
+    const emailUser = process.env.EMAIL_USER;
+    console.log(`[OTP] Sending OTP email to ${normalizedEmail} from ${emailUser}...`);
+    
     await transporter.sendMail({
-      from: `"Greenbloom" <${process.env.EMAIL_USER}>`,
+      from: `"Greenbloom" <${emailUser}>`,
       to: normalizedEmail,
       subject: "Verify your email",
-      text: `Your OTP is: ${otpCode}`,
+      text: `Your OTP is: ${otpCode}. It is valid for 5 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #008744; text-align: center;">Welcome to Greenbloom!</h2>
+          <p>Thank you for signing up. Please verify your email address by entering the following One-Time Password (OTP):</p>
+          <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; margin: 20px 0; border-radius: 5px;">
+            ${otpCode}
+          </div>
+          <p style="font-size: 13px; color: #666;">This OTP is valid for <strong>5 minutes</strong>. If you did not request this code, please ignore this email.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Plants Vigor / Greenbloom. All rights reserved.</p>
+        </div>
+      `
     });
 
+    console.log(`[OTP] OTP email successfully sent to ${normalizedEmail}`);
     res.status(200).json({ message: "OTP sent to your email" });
   } catch (err) {
+    console.error(`[OTP ERROR] Failed to send OTP to ${req.body?.email}:`, err);
     next(err);
   }
 };
@@ -81,22 +107,35 @@ const signup = async (req, res, next) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    console.log(`[SIGNUP] Attempting signup for email: ${normalizedEmail}`);
     
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      console.warn(`[SIGNUP] User already exists: ${normalizedEmail}`);
       return res.status(400).json({ message: "User already exists" });
     }
 
     const otpRecord = await OTP.findOne({ email: normalizedEmail });
 
     if (!otpRecord) {
+      console.warn(`[SIGNUP] No OTP record found for: ${normalizedEmail}`);
+      return res.status(400).json({ message: "OTP expired or invalid" });
+    }
+
+    // Precise application-level check for 5-minute expiry
+    const otpAgeMs = Date.now() - otpRecord.createdAt.getTime();
+    if (otpAgeMs > 5 * 60 * 1000) {
+      console.warn(`[SIGNUP] OTP found but expired for ${normalizedEmail}. Age: ${Math.round(otpAgeMs / 1000)}s`);
+      await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: "OTP expired or invalid" });
     }
 
     if (otpRecord.otp !== otp) {
+      console.warn(`[SIGNUP] Invalid OTP entered for ${normalizedEmail}. Expected ${otpRecord.otp}, got ${otp}`);
       return res.status(400).json({ message: "Incorrect OTP" });
     }
 
+    console.log(`[SIGNUP] OTP matches. Hashing password and creating user...`);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const role = roleFromEmail(normalizedEmail);
@@ -110,10 +149,12 @@ const signup = async (req, res, next) => {
     });
 
     await OTP.deleteOne({ _id: otpRecord._id });
+    console.log(`[SIGNUP] User account created successfully for: ${normalizedEmail} (ID: ${user._id})`);
+    
     generateToken(res, user._id);
-
     res.status(201).json(toResponseUser(user));
   } catch (err) {
+    console.error(`[SIGNUP ERROR] Signup failed for ${req.body?.email}:`, err);
     next(err);
   }
 };
@@ -252,36 +293,63 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+
+
 const sendForgotPasswordOTP = async (req, res, next) => {
   try {
     const email = req.user.email;
     const normalizedEmail = email.trim().toLowerCase();
     
+    console.log(`[FORGOT PASSWORD] Initiating password reset OTP for logged in user: ${normalizedEmail}`);
+
+    // Verify SMTP connection prior to sending
+    console.log("[FORGOT PASSWORD] Verifying SMTP connection...");
+    try {
+      await transporter.verify();
+      console.log("[FORGOT PASSWORD] SMTP connection verified successfully.");
+    } catch (verifyError) {
+      console.error("[FORGOT PASSWORD] SMTP Transporter verification failed prior to sending:", verifyError);
+      return res.status(500).json({ 
+        message: "Failed to establish a connection with the email server. Please check SMTP settings or try again later." 
+      });
+    }
+
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+    console.log(`[FORGOT PASSWORD] Storing OTP in database...`);
     await OTP.deleteMany({ email: normalizedEmail });
     await OTP.create({
       email: normalizedEmail,
-      otp: otpCode
+      otp: otpCode,
+      createdAt: new Date()
     });
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
+    const emailUser = process.env.EMAIL_USER;
+    console.log(`[FORGOT PASSWORD] Sending reset OTP email to ${normalizedEmail} from ${emailUser}...`);
+    
     await transporter.sendMail({
-      from: `"Plants Vigor" <${process.env.EMAIL_USER}>`,
+      from: `"Plants Vigor" <${emailUser}>`,
       to: normalizedEmail,
       subject: "Password Reset Verification OTP",
-      text: `Your password reset OTP is: ${otpCode}. Please use this to reset your password.`,
+      text: `Your password reset OTP is: ${otpCode}. It is valid for 5 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
+          <h2 style="color: #008744; text-align: center;">Reset Your Password</h2>
+          <p>We received a request to reset the password for your account. Please use the following One-Time Password (OTP) to complete the reset process:</p>
+          <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #333; margin: 20px 0; border-radius: 5px;">
+            ${otpCode}
+          </div>
+          <p style="font-size: 13px; color: #666;">This OTP is valid for <strong>5 minutes</strong>. If you did not request a password reset, please secure your account immediately.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Plants Vigor. All rights reserved.</p>
+        </div>
+      `
     });
 
+    console.log(`[FORGOT PASSWORD] Reset OTP email successfully sent to ${normalizedEmail}`);
     res.status(200).json({ message: "OTP sent to your email" });
   } catch (err) {
+    console.error(`[FORGOT PASSWORD ERROR] Failed to send OTP to ${req.user?.email}:`, err);
     next(err);
   }
 };
@@ -295,21 +363,35 @@ const resetForgottenPassword = async (req, res, next) => {
 
     const email = req.user.email;
     const normalizedEmail = email.trim().toLowerCase();
+    
+    console.log(`[RESET PASSWORD] Attempting password reset for: ${normalizedEmail}`);
 
     const otpRecord = await OTP.findOne({ email: normalizedEmail });
     if (!otpRecord) {
+      console.warn(`[RESET PASSWORD] No OTP record found for: ${normalizedEmail}`);
+      return res.status(400).json({ message: "OTP expired or invalid" });
+    }
+
+    // Application level 5-minute expiry check
+    const otpAgeMs = Date.now() - otpRecord.createdAt.getTime();
+    if (otpAgeMs > 5 * 60 * 1000) {
+      console.warn(`[RESET PASSWORD] Reset OTP found but expired for ${normalizedEmail}. Age: ${Math.round(otpAgeMs / 1000)}s`);
+      await OTP.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: "OTP expired or invalid" });
     }
 
     if (otpRecord.otp !== otp) {
+      console.warn(`[RESET PASSWORD] Invalid OTP entered for ${normalizedEmail}. Expected ${otpRecord.otp}, got ${otp}`);
       return res.status(400).json({ message: "Incorrect OTP" });
     }
 
+    console.log(`[RESET PASSWORD] OTP matched successfully. Updating password...`);
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
 
     const user = await User.findById(req.user._id);
     if (!user) {
+      console.error(`[RESET PASSWORD ERROR] User record not found for ID: ${req.user._id}`);
       return res.status(404).json({ message: "User not found" });
     }
 
@@ -317,9 +399,11 @@ const resetForgottenPassword = async (req, res, next) => {
     await user.save();
 
     await OTP.deleteOne({ _id: otpRecord._id });
+    console.log(`[RESET PASSWORD] Password updated successfully for: ${normalizedEmail}`);
 
     res.status(200).json({ message: "Password reset successfully" });
   } catch (err) {
+    console.error(`[RESET PASSWORD ERROR] Password reset failed for ${req.user?.email}:`, err);
     next(err);
   }
 };

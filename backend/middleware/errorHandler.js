@@ -5,6 +5,10 @@ const notFound = (req, res, next) => {
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  
+  // Log the full error details in the server console for easy production debugging
+  console.error(`[ERROR] [${req.method}] ${req.originalUrl} -`, err);
+
   res.status(statusCode).json({
     message: err.message || "Server error",
     stack: process.env.NODE_ENV === "production" ? null : err.stack,
