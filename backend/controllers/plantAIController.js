@@ -1,8 +1,6 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { genAI } = require("../utils/geminiService");
 const { PlantDiagnosis, PlantQuizResult } = require("../models/PlantAI");
 const { cloudinary } = require("../config/cloudinary");
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Helper to convert file to generative part
 function fileToGenerativePart(buffer, mimeType) {
@@ -16,11 +14,14 @@ function fileToGenerativePart(buffer, mimeType) {
 
 const diagnosePlant = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No image uploaded" });
+    if (!genAI) {
+      return res.status(503).json({
+        message: "Plant AI Diagnosis is currently unavailable.",
+        error: "GEMINI_API_KEY is not configured on the server. Please contact the administrator."
+      });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const prompt = `
       Analyze this plant image and provide a detailed health report in JSON format.
@@ -99,6 +100,20 @@ const diagnosePlant = async (req, res) => {
     res.status(200).json(newDiagnosis);
   } catch (error) {
     console.error("Plant Diagnosis Error:", error);
+    
+    const errMsg = error.message || "";
+    if (errMsg.includes("403") || errMsg.includes("denied access")) {
+      return res.status(503).json({
+        message: "AI Service Denied Access",
+        error: "Google has suspended or blocked the API key configured on this server. Please update GEMINI_API_KEY."
+      });
+    } else if (errMsg.includes("429") || errMsg.includes("quota")) {
+      return res.status(503).json({
+        message: "AI Service Quota Exceeded",
+        error: "The API key configured on this server has run out of quota or has been restricted. Please update GEMINI_API_KEY."
+      });
+    }
+    
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
@@ -227,6 +242,10 @@ const handlePlantDbIntent = async (message) => {
 };
 
 const handleAiIntent = async (message, history) => {
+  if (!genAI) {
+    throw new Error("GEMINI_API_KEY is not configured on the server.");
+  }
+
   const { PlantInfo } = require("../models/PlantInfo");
   const plants = await PlantInfo.find({});
 
@@ -254,7 +273,7 @@ Plant Database Context:
 ${plantContext}`;
 
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-flash-latest",
+    model: "gemini-2.0-flash",
     systemInstruction: systemInstruction
   });
 
@@ -420,9 +439,15 @@ const chatWithAI = async (req, res) => {
       }
     }
 
+    const errMsg = error.message || "";
+    let errorHelpText = "🌱 I'm having trouble connecting to my plant roots right now. Please try again shortly!";
+    if (errMsg.includes("403") || errMsg.includes("denied access") || errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("configured")) {
+      errorHelpText = "🤖 **Plant AI Assistant Undergoing Maintenance**\n\nThe AI Studio key configured on this server has been suspended, exceeded its free tier quotas, or is unconfigured. Please contact the administrator to update the API key, or use our direct Care Database by asking specific questions about plants in our shop!";
+    }
+    
     res.status(500).json({ 
       role: "model",
-      parts: [{ text: "🌱 I'm having trouble connecting to my plant roots right now. Please try again shortly!" }] 
+      parts: [{ text: errorHelpText }] 
     });
   }
 };

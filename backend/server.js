@@ -22,9 +22,13 @@ if (process.env.NODE_ENV === "production") {
 connectDB();
 
 const { verifyConnection } = require("./utils/emailService");
+const { verifyGeminiConnection } = require("./utils/geminiService");
 
 // Diagnostic verification of Gmail SMTP on server bootup
 verifyConnection();
+
+// Diagnostic verification of Gemini AI on server bootup
+verifyGeminiConnection();
 
 const app = express();
 
