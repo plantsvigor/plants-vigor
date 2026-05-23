@@ -101,7 +101,7 @@ export default function AddressForm({ open, onOpenChange, initialData }: Address
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] rounded-3xl">
+      <DialogContent className="w-[95%] sm:max-w-[500px] rounded-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
             {initialData ? "Edit Address" : "Add New Address"}
