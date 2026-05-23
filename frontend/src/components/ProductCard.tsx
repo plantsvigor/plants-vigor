@@ -76,6 +76,8 @@ export default function ProductCard({ product, className }: { product: Product; 
           src={images[0]}
           alt={product.name}
           loading="lazy"
+          width={260}
+          height={260}
           className={cn(
             "h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105",
             showSecond ? "opacity-0" : "opacity-100"
@@ -86,6 +88,8 @@ export default function ProductCard({ product, className }: { product: Product; 
             src={images[1]}
             alt={`${product.name} alternate`}
             loading="lazy"
+            width={260}
+            height={260}
             className={cn(
               "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110",
               showSecond ? "opacity-100 scale-105" : "opacity-0"
