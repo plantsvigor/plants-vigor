@@ -19,7 +19,6 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import MyOrders from "@/pages/MyOrders";
 import Admin from "@/pages/Admin";
-import PlantCareAI from "@/pages/PlantCareAI";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "@/pages/MyProfile";
 
@@ -92,7 +91,6 @@ const App = () => {
                               <Route path="/signup" element={<Signup />} />
                               <Route path="/orders" element={<MyOrders />} />
                               <Route path="/profile" element={<MyProfile />} />
-                              <Route path="/plant-care-ai" element={<PlantCareAI />} />
                               <Route path="/admin/*" element={<Admin />} />
                               <Route path="*" element={<NotFound />} />
                             </Routes>

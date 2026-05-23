@@ -22,13 +22,9 @@ if (process.env.NODE_ENV === "production") {
 connectDB();
 
 const { verifyConnection } = require("./utils/emailService");
-const { verifyGeminiConnection } = require("./utils/geminiService");
 
 // Diagnostic verification of Gmail SMTP on server bootup
 verifyConnection();
-
-// Diagnostic verification of Gemini AI on server bootup
-verifyGeminiConnection();
 
 const app = express();
 
@@ -122,7 +118,7 @@ app.use("/api/admin-catalog", require("./routes/adminCatalogRoutes"));
 app.use("/api/checkout", require("./routes/checkoutRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/address", require("./routes/addressRoutes"));
-app.use("/api/plant-ai", require("./routes/plantAIRoutes"));
+app.use("/api/chatbot", require("./routes/chatbotRoutes"));
 app.use("/api/reels", require("./routes/reelRoutes"));
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/banners", require("./routes/bannerRoutes"));

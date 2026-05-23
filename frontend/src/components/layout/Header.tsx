@@ -82,7 +82,6 @@ const navLinks = [
     ]
   },
   { label: "Gifts", to: "/category/gifts" },
-  { label: "Plant Care AI", to: "/plant-care-ai" },
 ];
 
 export default function Header() {
