@@ -20,10 +20,11 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
     id: "",
     name: "",
     slug: "",
-    price: 0,
-    discountPrice: 0,
+    price: "",
+    discountPrice: "",
+    discountPercentage: "",
     description: "",
-    stock: 0,
+    stock: 10,
     featured: false,
     bestSeller: false,
     images: [],
@@ -36,14 +37,23 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
 
   useEffect(() => {
     if (product) {
-      setFormData(product);
+      const calculatedPct = (product.price && product.discountPrice && product.discountPrice < product.price)
+        ? Math.round((1 - product.discountPrice / product.price) * 100)
+        : "";
+      setFormData({
+        ...product,
+        price: product.price || "",
+        discountPrice: product.discountPrice || "",
+        discountPercentage: calculatedPct
+      });
     } else {
       setFormData({
         id: "P" + Math.random().toString(36).substr(2, 6).toUpperCase(),
         name: "",
         slug: "",
-        price: 0,
-        discountPrice: 0,
+        price: "",
+        discountPrice: "",
+        discountPercentage: "",
         description: "",
         stock: 10,
         featured: false,
@@ -57,19 +67,32 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
   }, [product, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+    const { name, value } = e.target;
     
     setFormData((prev: any) => {
       const newData = {
         ...prev,
-        [name]: type === "number" ? Number(value) : value,
+        [name]: value,
       };
 
       if (name === "name") {
         newData.slug = value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
       }
 
+      if (name === "price" || name === "discountPercentage") {
+        const actualPrice = name === "price" ? Number(value) : Number(prev.price);
+        const discountPct = name === "discountPercentage" ? Number(value) : Number(prev.discountPercentage);
 
+        if (!isNaN(actualPrice) && actualPrice > 0) {
+          if (!isNaN(discountPct) && discountPct > 0) {
+            newData.discountPrice = Math.round(actualPrice * (1 - discountPct / 100));
+          } else {
+            newData.discountPrice = "";
+          }
+        } else {
+          newData.discountPrice = "";
+        }
+      }
 
       return newData;
     });
@@ -81,9 +104,21 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
     try {
       const dataToSave = { ...formData };
       
+      dataToSave.price = Number(dataToSave.price) || 0;
+      dataToSave.discountPrice = Number(dataToSave.discountPrice) || 0;
+      dataToSave.stock = Number(dataToSave.stock) || 0;
+      
+      delete dataToSave.discountPercentage;
+
       // Validation
+      if (dataToSave.price <= 0) {
+        toast.error("Actual Price must be greater than 0");
+        setLoading(false);
+        return;
+      }
+
       if (dataToSave.discountPrice > 0 && dataToSave.discountPrice >= dataToSave.price) {
-        toast.error("Offer Price must be less than Actual Price / MRP");
+        toast.error("Calculated Offer Price must be less than Actual Price");
         setLoading(false);
         return;
       }
@@ -140,10 +175,10 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
               </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold ml-1 text-muted-foreground">Original Price / MRP (₹) - Strikethrough</label>
+                  <label className="text-sm font-bold ml-1">Actual Price (₹)</label>
                   <input 
                     name="price"
-                    type="number"
+                    type="text"
                     value={formData.price}
                     onChange={handleChange}
                     required
@@ -190,15 +225,20 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold ml-1 text-primary">Offer Price / Sale Price (₹) - Selling Price</label>
+                  <label className="text-sm font-bold ml-1 text-primary">Discount Percentage (%)</label>
                   <input 
-                    name="discountPrice"
-                    type="number"
-                    value={formData.discountPrice}
+                    name="discountPercentage"
+                    type="text"
+                    value={formData.discountPercentage}
                     onChange={handleChange}
-                    placeholder="e.g. 10 (Must be less than Actual Price)"
+                    placeholder="e.g. 20 (Percentage off Actual Price)"
                     className="w-full px-4 py-3 bg-primary/10 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
                   />
+                  {formData.price && formData.discountPercentage && (
+                    <p className="text-xs font-semibold text-muted-foreground ml-1 mt-1">
+                      Calculated Offer Price: <span className="text-primary font-bold">₹{formData.discountPrice}</span> ({formData.discountPercentage}% discount on ₹{formData.price})
+                    </p>
+                  )}
                 </div>
 
 
