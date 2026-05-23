@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, lazy, Suspense } from "react";
 import Header from "./Header";
 import Footer from "./Footer";
 import CartDrawer from "./CartDrawer";
-import PlantChatWidget from "../plant-ai/PlantChatWidget";
+
+const PlantChatWidget = lazy(() => import("../plant-ai/PlantChatWidget"));
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,9 @@ export default function Layout({ children }: { children: ReactNode }) {
       <CartDrawer />
       <main className="flex-1">{children}</main>
       <Footer />
-      <PlantChatWidget />
+      <Suspense fallback={null}>
+        <PlantChatWidget />
+      </Suspense>
     </div>
   );
 }

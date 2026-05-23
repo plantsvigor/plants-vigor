@@ -8,14 +8,15 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 // Pages
-import Dashboard from "@/pages/Dashboard";
-import Products from "@/pages/Products";
-import Orders from "@/pages/Orders";
-import Users from "@/pages/Users";
-import Reviews from "@/pages/Reviews";
-import Login from "@/pages/Login";
-import Reels from "@/pages/Reels";
-import Banners from "@/pages/Banners";
+const Dashboard = React.lazy(() => import("@/pages/Dashboard"));
+const Products = React.lazy(() => import("@/pages/Products"));
+const Orders = React.lazy(() => import("@/pages/Orders"));
+const Users = React.lazy(() => import("@/pages/Users"));
+const Reviews = React.lazy(() => import("@/pages/Reviews"));
+const Login = React.lazy(() => import("@/pages/Login"));
+const Reels = React.lazy(() => import("@/pages/Reels"));
+const Banners = React.lazy(() => import("@/pages/Banners"));
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,20 +49,26 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
-          <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-          <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+        <React.Suspense fallback={
+          <div className="h-screen w-screen flex items-center justify-center bg-background text-foreground">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+            <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
 
-          <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
-          <Route path="/banners" element={<ProtectedRoute><Banners /></ProtectedRoute>} />
-          
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="/reels" element={<ProtectedRoute><Reels /></ProtectedRoute>} />
+            <Route path="/banners" element={<ProtectedRoute><Banners /></ProtectedRoute>} />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </React.Suspense>
       </BrowserRouter>
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
