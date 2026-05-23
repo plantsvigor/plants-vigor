@@ -1,8 +1,7 @@
-import { useState, lazy, Suspense } from "react";
-import { MessageSquare, X, Bot, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { MessageSquare, X, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const PlantChatbot = lazy(() => import("./PlantChatbot"));
+import PlantChatbot from "./PlantChatbot";
 
 export default function PlantChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,13 +27,7 @@ export default function PlantChatWidget() {
             </Button>
           </div>
           <div className="h-[450px]">
-            <Suspense fallback={
-              <div className="h-full w-full flex items-center justify-center bg-secondary/10">
-                <Loader2 className="animate-spin text-primary h-8 w-8" />
-              </div>
-            }>
-              <PlantChatbot hideHeader={true} />
-            </Suspense>
+            <PlantChatbot hideHeader={true} />
           </div>
         </div>
       )}

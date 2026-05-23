@@ -180,7 +180,7 @@ const getChatbotResponse = async (req, res) => {
       responseText = `🌿 **Top Plant Recommendations**\n\nHere are some plants from our curated knowledge base that are ${categoryReason}:\n\n${plantListText}\n\nWould you like to buy a plant today? I can recommend some real greenhouse products currently in stock!`;
       
       // Query MongoDB for real products to show as cards!
-      suggestedProducts = await Product.find({}).select("name price discountPrice images slug category").limit(5);
+      suggestedProducts = await Product.find({}).limit(5);
 
       return res.status(200).json({
         role: "model",
@@ -221,10 +221,10 @@ const getChatbotResponse = async (req, res) => {
       // Query if there is a match in real products to suggest
       // For instance, match product name containing plant name
       const queryName = matchedPlant.name.split(" ")[0]; // First word (e.g. "Snake" or "Aloe")
-      suggestedProducts = await Product.find({ name: new RegExp(queryName, 'i') }).select("name price discountPrice images slug category").limit(3);
+      suggestedProducts = await Product.find({ name: new RegExp(queryName, 'i') }).limit(3);
       
       if (suggestedProducts.length === 0) {
-        suggestedProducts = await Product.find({}).select("name price discountPrice images slug category").limit(3); // Fallback to standard products
+        suggestedProducts = await Product.find({}).limit(3); // Fallback to standard products
       }
 
       return res.status(200).json({
@@ -239,7 +239,7 @@ const getChatbotResponse = async (req, res) => {
     responseText = `👋 **Hello! Welcome to Plants Vigor!**\n\nI am your custom support & plant care assistant. I can answer questions about plant care, check if a plant is pet-safe, recommend plants, track your orders, and answer shipping FAQs!\n\n**Here are some things you can try:**\n* "Tell me about Snake Plant"\n* "Which plants are pet safe?"\n* "How long does shipping take?"\n* "Track order GB-100201"\n\nFeel free to click any of the **quick reply buttons** below to get started immediately!`;
 
     // Query standard e-commerce products for general display
-    suggestedProducts = await Product.find({}).select("name price discountPrice images slug category").limit(3);
+    suggestedProducts = await Product.find({}).limit(3);
 
     return res.status(200).json({
       role: "model",

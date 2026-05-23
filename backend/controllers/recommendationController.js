@@ -102,7 +102,7 @@ const getRecommendations = async (req, res) => {
     }
 
     // Step 2: Query the real e-commerce products in stock
-    const dbProducts = await Product.find({}).select("name price discountPrice images slug category");
+    const dbProducts = await Product.find({});
     
     // Step 3: Map the matching plants to real database products dynamically
     const results = [];

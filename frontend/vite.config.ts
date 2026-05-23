@@ -19,33 +19,4 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes("node_modules")) {
-            if (id.includes("react") || id.includes("react-dom") || id.includes("react-router")) {
-              return "vendor-react";
-            }
-            if (id.includes("lucide-react")) {
-              return "vendor-lucide";
-            }
-            if (id.includes("recharts") || id.includes("d3")) {
-              return "vendor-charts";
-            }
-            if (id.includes("framer-motion")) {
-              return "vendor-motion";
-            }
-            if (id.includes("leaflet")) {
-              return "vendor-maps";
-            }
-            return "vendor-others";
-          }
-        },
-      },
-    },
-    chunkSizeWarningLimit: 800,
-    cssCodeSplit: true,
-    sourcemap: false,
-  },
 }));

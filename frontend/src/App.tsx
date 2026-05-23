@@ -6,22 +6,21 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ScrollToTop from "@/components/ScrollToTop";
 
 import Layout from "@/components/layout/Layout";
-const Home = lazy(() => import("@/pages/Home"));
-const Shop = lazy(() => import("@/pages/Shop"));
-const CategoryPage = lazy(() => import("@/pages/CategoryPage"));
-const ProductDetail = lazy(() => import("@/pages/ProductDetail"));
-const Cart = lazy(() => import("@/pages/Cart"));
-const Checkout = lazy(() => import("@/pages/Checkout"));
-const OrderConfirmed = lazy(() => import("@/pages/OrderConfirmed"));
-const TrackOrder = lazy(() => import("@/pages/TrackOrder"));
-const Wishlist = lazy(() => import("@/pages/Wishlist"));
-const Login = lazy(() => import("@/pages/Login"));
-const Signup = lazy(() => import("@/pages/Signup"));
-const MyOrders = lazy(() => import("@/pages/MyOrders"));
-const Admin = lazy(() => import("@/pages/Admin"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const MyProfile = lazy(() => import("@/pages/MyProfile"));
-
+import Home from "@/pages/Home";
+import Shop from "@/pages/Shop";
+import CategoryPage from "@/pages/CategoryPage";
+import ProductDetail from "@/pages/ProductDetail";
+import Cart from "@/pages/Cart";
+import Checkout from "@/pages/Checkout";
+import OrderConfirmed from "@/pages/OrderConfirmed";
+import TrackOrder from "@/pages/TrackOrder";
+import Wishlist from "@/pages/Wishlist";
+import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
+import MyOrders from "@/pages/MyOrders";
+import Admin from "@/pages/Admin";
+import NotFound from "@/pages/NotFound";
+import MyProfile from "@/pages/MyProfile";
 
 import { CartProvider } from "@/store/cart";
 import { WishlistProvider } from "@/store/wishlist";
@@ -32,7 +31,7 @@ import { AdminCatalogProvider } from "@/store/adminCatalog";
 import { AddressProvider } from "@/store/address";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 
 const queryClient = new QueryClient();
@@ -78,30 +77,24 @@ const App = () => {
                         <OrdersProvider>
                           <AdminCatalogProvider>
                             <Layout>
-                              <Suspense fallback={
-                                <div className="flex h-[60vh] w-full items-center justify-center">
-                                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                                </div>
-                              }>
-                                <Routes>
-                                  <Route path="/" element={<Home />} />
-                                  <Route path="/category/plants" element={<Shop />} />
-                                  <Route path="/category/:slug" element={<CategoryPage />} />
-                                  <Route path="/product/:slug" element={<ProductDetail />} />
-                                  <Route path="/cart" element={<Cart />} />
-                                  <Route path="/checkout" element={<Checkout />} />
-                                  <Route path="/order/:id" element={<OrderConfirmed />} />
-                                  <Route path="/track-order" element={<TrackOrder />} />
-                                  <Route path="/wishlist" element={<Wishlist />} />
-                                  <Route path="/login" element={<Login />} />
-                                  <Route path="/signup" element={<Signup />} />
-                                  <Route path="/orders" element={<MyOrders />} />
-                                  <Route path="/profile" element={<MyProfile />} />
-                                  <Route path="/admin/*" element={<Admin />} />
-                                  <Route path="*" element={<NotFound />} />
-                                </Routes>
-                              </Suspense>
-                            </Layout>
+                              <Routes>
+                              <Route path="/" element={<Home />} />
+                              <Route path="/category/plants" element={<Shop />} />
+                              <Route path="/category/:slug" element={<CategoryPage />} />
+                              <Route path="/product/:slug" element={<ProductDetail />} />
+                              <Route path="/cart" element={<Cart />} />
+                              <Route path="/checkout" element={<Checkout />} />
+                              <Route path="/order/:id" element={<OrderConfirmed />} />
+                              <Route path="/track-order" element={<TrackOrder />} />
+                              <Route path="/wishlist" element={<Wishlist />} />
+                              <Route path="/login" element={<Login />} />
+                              <Route path="/signup" element={<Signup />} />
+                              <Route path="/orders" element={<MyOrders />} />
+                              <Route path="/profile" element={<MyProfile />} />
+                              <Route path="/admin/*" element={<Admin />} />
+                              <Route path="*" element={<NotFound />} />
+                            </Routes>
+                          </Layout>
                         </AdminCatalogProvider>
                       </OrdersProvider>
                     </ReviewsProvider>

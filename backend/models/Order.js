@@ -42,9 +42,6 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-orderSchema.index({ userId: 1 });
-orderSchema.index({ email: 1 });
-
 module.exports = {
   Order: mongoose.model("Order", orderSchema),
   orderStatusEnum,

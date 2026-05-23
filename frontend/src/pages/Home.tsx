@@ -103,14 +103,7 @@ export default function Home() {
         >
           {extendedHeroImages.map((src, i) => (
             <div key={i} className="relative flex-none w-full h-full">
-              <img 
-                src={src} 
-                alt="Beautiful Plants Collection Banner" 
-                loading={i === 0 ? "eager" : "lazy"}
-                width={1200}
-                height={700}
-                className="h-full w-full object-cover" 
-              />
+              <img src={src} alt="" className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-background/20" />
             </div>
           ))}
@@ -184,7 +177,7 @@ export default function Home() {
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <div className="relative grid place-items-center aspect-square w-full rounded-full bg-secondary/20 overflow-hidden shadow-soft border border-primary/20 p-0 transition-smooth">
-                  <img src={c.image} alt={c.name} loading="lazy" width={150} height={150} className="h-full w-full object-cover rounded-full" />
+                  <img src={c.image} alt={c.name} loading="lazy" className="h-full w-full object-cover rounded-full" />
                 </div>
                 <h3 className="mt-3 text-[10px] sm:text-sm font-semibold leading-tight whitespace-nowrap">{c.name}</h3>
               </Link>
@@ -271,9 +264,6 @@ export default function Home() {
                 <img
                   src="/C:/Users/amitk/.gemini/antigravity/brain/b87fd7eb-04a5-4dce-bf1e-bfeb839ead58/plant_care_nurture_1778007107023.png"
                   alt="Nurturing plants"
-                  loading="lazy"
-                  width={500}
-                  height={625}
                   className="h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110"
                 />
                 <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-[3rem]" />
