@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const orderStatusEnum = ["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered"];
+const orderStatusEnum = ["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned"];
 
 const orderSchema = new mongoose.Schema(
   {
@@ -38,6 +38,14 @@ const orderSchema = new mongoose.Schema(
         at: { type: Number, required: true },
       },
     ],
+    // Shiprocket fields
+    shipment_id: { type: String, default: null },
+    shiprocket_order_id: { type: String, default: null },
+    awb_code: { type: String, default: null },
+    courier_name: { type: String, default: null },
+    tracking_url: { type: String, default: null },
+    current_status: { type: String, default: null },
+    awb_assignment_status: { type: String, default: null },
   },
   { timestamps: true }
 );

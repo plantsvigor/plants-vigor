@@ -31,6 +31,12 @@ export interface Order {
   status: OrderStatus;
   createdAt: number;
   history: { status: OrderStatus; at: number }[];
+  shipment_id?: string;
+  shiprocket_order_id?: string;
+  awb_code?: string;
+  courier_name?: string;
+  tracking_url?: string;
+  current_status?: string;
 }
 
 interface OrdersCtx {

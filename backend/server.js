@@ -123,6 +123,7 @@ app.use("/api/reels", require("./routes/reelRoutes"));
 app.use("/api/payment", require("./routes/paymentRoutes"));
 app.use("/api/banners", require("./routes/bannerRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/shiprocket", require("./routes/shiprocketRoutes"));
 
 app.use(notFound);
 app.use(errorHandler);

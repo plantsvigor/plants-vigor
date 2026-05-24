@@ -12,7 +12,8 @@ import {
   PackageCheck,
   Clock,
   MapPin,
-  Copy
+  Copy,
+  ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +37,53 @@ export default function Orders() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeStatus, setActiveStatus] = useState("All");
+
+  const [assigningAWB, setAssigningAWB] = useState<string | null>(null);
+  const [schedulingPickup, setSchedulingPickup] = useState<string | null>(null);
+  const [generatingLabel, setGeneratingLabel] = useState<string | null>(null);
+
+  const handleAssignAWB = async (orderCode: string) => {
+    setAssigningAWB(orderCode);
+    try {
+      await api.post(`/shiprocket/orders/${orderCode}/awb`);
+      toast.success("Courier and AWB assigned successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to assign AWB.");
+    } finally {
+      setAssigningAWB(null);
+    }
+  };
+
+  const handleRequestPickup = async (orderCode: string) => {
+    setSchedulingPickup(orderCode);
+    try {
+      await api.post(`/shiprocket/orders/${orderCode}/pickup`);
+      toast.success("Pickup scheduled successfully!");
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to schedule pickup.");
+    } finally {
+      setSchedulingPickup(null);
+    }
+  };
+
+  const handleGenerateLabel = async (orderCode: string) => {
+    setGeneratingLabel(orderCode);
+    try {
+      const res: any = await api.get(`/shiprocket/orders/${orderCode}/label`);
+      if (res && res.label_url) {
+        window.open(res.label_url, "_blank");
+        toast.success("Shipping label opened in a new tab!");
+      } else {
+        toast.error("No label URL returned.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to generate label.");
+    } finally {
+      setGeneratingLabel(null);
+    }
+  };
 
   const { data: ordersData, isLoading } = useQuery({
     queryKey: ["admin-orders"],
@@ -166,6 +214,69 @@ export default function Orders() {
                   <p className="text-xs font-bold mt-2 text-primary">Phone: {order.address?.phone}</p>
                 </div>
 
+                {/* Shiprocket Shipping Integration Info */}
+                <div className="bg-primary/5 rounded-xl p-3.5 mb-4 border border-primary/10 text-card-foreground">
+                  <p className="text-[10px] font-bold uppercase text-primary flex items-center gap-1.5 mb-2">
+                    <Truck className="h-3.5 w-3.5 text-primary" />
+                    Shiprocket Shipping
+                  </p>
+                  
+                  {order.awb_code ? (
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Courier:</span>
+                        <span className="font-bold">{order.courier_name || "N/A"}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">AWB:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold">{order.awb_code}</span>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(order.awb_code);
+                              toast.success("AWB copied!");
+                            }}
+                            className="p-1 hover:bg-secondary rounded text-primary"
+                          >
+                            <Copy className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Shipment Status:</span>
+                        <span className="font-semibold text-primary capitalize bg-primary/10 px-1.5 py-0.5 rounded text-[10px]">
+                          {order.current_status || "Assigned"}
+                        </span>
+                      </div>
+                      {order.tracking_url && (
+                        <div className="pt-1.5 border-t border-primary/10 mt-1">
+                          <a 
+                            href={order.tracking_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-[10px] text-primary font-bold hover:underline flex items-center gap-1"
+                          >
+                            Track on Shiprocket <ChevronRight className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs space-y-2">
+                      <p className="text-muted-foreground leading-normal">
+                        No courier or AWB assigned yet. {order.shipment_id ? `(Shipment ID: ${order.shipment_id})` : "(Shipment not created yet)"}
+                      </p>
+                      <button
+                        onClick={() => handleAssignAWB(order.id)}
+                        disabled={assigningAWB === order.id}
+                        className="w-full py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {assigningAWB === order.id ? "Assigning Courier & AWB..." : "Assign Courier & AWB"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
                     <ShoppingBag className="h-3 w-3" />
@@ -209,10 +320,32 @@ export default function Orders() {
                   onChange={(e) => handleStatusChange(order.id, e.target.value)}
                   className="w-full bg-secondary border-none rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer"
                 >
-                  {["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered"].map(s => (
+                  {["Pending", "Confirmed", "Shipped", "Out for Delivery", "Delivered", "Cancelled", "Returned"].map(s => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
+
+                {/* Shiprocket Actions (only if shipment exists) */}
+                {order.shipment_id && (
+                  <div className="space-y-1.5">
+                    <button 
+                      onClick={() => handleRequestPickup(order.id)}
+                      disabled={schedulingPickup === order.id || !order.awb_code}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      <Truck className="h-3.5 w-3.5" />
+                      {schedulingPickup === order.id ? "Scheduling..." : "Request Pickup"}
+                    </button>
+                    <button 
+                      onClick={() => handleGenerateLabel(order.id)}
+                      disabled={generatingLabel === order.id}
+                      className="w-full flex items-center justify-center gap-1.5 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      {generatingLabel === order.id ? "Generating..." : "Generate Label"}
+                    </button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => openWhatsApp(order.address?.phone, order.id)}
