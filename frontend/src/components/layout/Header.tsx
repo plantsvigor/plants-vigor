@@ -9,8 +9,42 @@ import { useCart } from "@/store/cart";
 import { useAuth } from "@/store/auth";
 import { useWishlist } from "@/store/wishlist";
 import { categories } from "@/data/catalog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useProducts } from "@/hooks/useProducts";
+import { formatINR } from "@/data/catalog";
+
+const useTypewriterPlaceholder = (phrases: string[], typingSpeed = 100, deletingSpeed = 50, delay = 1500) => {
+  const [placeholder, setPlaceholder] = useState("");
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const currentPhrase = phrases[phraseIdx];
+
+    if (isDeleting) {
+      timer = setTimeout(() => {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length - 1));
+      }, deletingSpeed);
+    } else {
+      timer = setTimeout(() => {
+        setPlaceholder(currentPhrase.substring(0, placeholder.length + 1));
+      }, typingSpeed);
+    }
+
+    if (!isDeleting && placeholder === currentPhrase) {
+      timer = setTimeout(() => setIsDeleting(true), delay);
+    } else if (isDeleting && placeholder === "") {
+      setIsDeleting(false);
+      setPhraseIdx((phraseIdx + 1) % phrases.length);
+    }
+
+    return () => clearTimeout(timer);
+  }, [placeholder, isDeleting, phraseIdx, phrases, typingSpeed, deletingSpeed, delay]);
+
+  return placeholder;
+};
 
 const navLinks = [
   {
@@ -92,13 +126,48 @@ export default function Header() {
   const [showSearch, setShowSearch] = useState(false);
   const navigate = useNavigate();
 
+  const { products: allProducts, loading: productsLoading } = useProducts();
+
+  const animatedNoun = useTypewriterPlaceholder([
+    "plants…",
+    "pots…",
+    "seeds…",
+    "plant care…",
+    "accessories…"
+  ]);
+  const [debouncedQ, setDebouncedQ] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQ(q);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [q]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (q.trim()) {
       navigate(`/category/plants?q=${encodeURIComponent(q.trim())}`);
       setShowSearch(false);
+      setIsFocused(false);
     }
   };
+
+  const filteredProducts = allProducts
+    .filter(p => 
+      p.name.toLowerCase().includes(debouncedQ.toLowerCase()) || 
+      p.category.toLowerCase().includes(debouncedQ.toLowerCase())
+    )
+    .sort((a, b) => {
+      const query = debouncedQ.toLowerCase();
+      const aStarts = a.name.toLowerCase().startsWith(query);
+      const bStarts = b.name.toLowerCase().startsWith(query);
+      
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return 1;
+      return 0;
+    });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedNav, setExpandedNav] = useState<string | null>(null);
 
@@ -160,7 +229,53 @@ export default function Header() {
         {/* Search */}
         <form onSubmit={submit} className="hidden md:flex flex-1 max-w-md ml-auto relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input value={q} onChange={e => setQ(e.target.value)} placeholder="Search plants, pots, seeds…" className="pl-9 rounded-full bg-secondary/50 border-transparent focus-visible:bg-background" />
+          <Input 
+            value={q} 
+            onChange={e => setQ(e.target.value)} 
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+            placeholder={`Search ${animatedNoun}`} 
+            className="pl-9 rounded-full bg-secondary/50 border-transparent focus-visible:bg-background" 
+          />
+          {isFocused && debouncedQ.trim().length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border/80 rounded-2xl shadow-xl max-h-[380px] overflow-y-auto z-50 p-2 animate-in fade-in slide-in-from-top-1 duration-200">
+              {productsLoading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">No products found</div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredProducts
+                    .slice(0, 6)
+                    .map(p => (
+                      <Link
+                        key={p.id}
+                        to={`/product/${p.slug}`}
+                        onClick={() => {
+                          setQ("");
+                          setIsFocused(false);
+                        }}
+                        className="flex items-center gap-3 p-2 hover:bg-secondary rounded-xl transition-colors text-left"
+                      >
+                        <img 
+                          src={p.images?.[0] || "https://images.unsplash.com/photo-1545239351-ef35f43d514b"} 
+                          alt={p.name} 
+                          className="h-10 w-10 object-cover rounded-lg bg-secondary shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold truncate text-foreground">{p.name}</h4>
+                          <p className="text-xs text-muted-foreground capitalize">{p.category.replace("-", " ")}</p>
+                        </div>
+                        <div className="text-sm font-bold text-[#008744] shrink-0">
+                          {formatINR(p.discountPrice && p.discountPrice > 0 ? p.discountPrice : p.price)}
+                        </div>
+                      </Link>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+          )}
         </form>
 
         {/* Right icons */}
@@ -286,14 +401,14 @@ export default function Header() {
 
       {/* Full-width Mobile Search Overlay */}
       {showSearch && (
-        <div className="absolute inset-0 z-50 flex items-center bg-background px-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <form onSubmit={submit} className="flex flex-1 items-center gap-3">
+        <div className="absolute inset-0 z-50 flex flex-col bg-background px-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <form onSubmit={submit} className="flex items-center gap-3 py-4 border-b">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <Input
               autoFocus
               value={q}
               onChange={e => setQ(e.target.value)}
-              placeholder="Search plants, pots, seeds…"
+              placeholder={`Search ${animatedNoun}`}
               className="flex-1 h-10 border-none bg-transparent focus-visible:ring-0 text-base"
             />
             <Button
@@ -306,6 +421,46 @@ export default function Header() {
               <X className="h-5 w-5" />
             </Button>
           </form>
+
+          {debouncedQ.trim().length > 0 && (
+            <div className="flex-1 overflow-y-auto py-4">
+              {productsLoading ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="p-4 text-center text-sm text-muted-foreground">No products found</div>
+              ) : (
+                <div className="space-y-1">
+                  {filteredProducts
+                    .slice(0, 10)
+                    .map(p => (
+                      <Link
+                        key={p.id}
+                        to={`/product/${p.slug}`}
+                        onClick={() => {
+                          setQ("");
+                          setShowSearch(false);
+                        }}
+                        className="flex items-center gap-3 p-3 hover:bg-secondary rounded-xl transition-colors text-left"
+                      >
+                        <img 
+                          src={p.images?.[0] || "https://images.unsplash.com/photo-1545239351-ef35f43d514b"} 
+                          alt={p.name} 
+                          className="h-12 w-12 object-cover rounded-lg bg-secondary shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-semibold truncate text-foreground">{p.name}</h4>
+                          <p className="text-xs text-muted-foreground capitalize">{p.category.replace("-", " ")}</p>
+                        </div>
+                        <div className="text-sm font-bold text-[#008744] shrink-0">
+                          {formatINR(p.discountPrice && p.discountPrice > 0 ? p.discountPrice : p.price)}
+                        </div>
+                      </Link>
+                    ))
+                  }
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </header>

@@ -28,6 +28,77 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useProducts } from "@/hooks/useProducts";
 
+const formatDescription = (description: string) => {
+  if (!description) return null;
+
+  const lines = description.split("\n");
+  const elements: React.ReactNode[] = [];
+  let currentList: React.ReactNode[] = [];
+  let listType: "bullet" | "number" | null = null;
+  let keyCounter = 0;
+
+  const renderList = () => {
+    if (currentList.length > 0) {
+      const ListTag = listType === "number" ? "ol" : "ul";
+      const listClass = listType === "number"
+        ? "list-decimal pl-6 space-y-2 my-4 text-muted-foreground leading-relaxed"
+        : "list-disc pl-6 space-y-2 my-4 text-muted-foreground leading-relaxed";
+      
+      elements.push(
+        <ListTag key={`list-${keyCounter++}`} className={listClass}>
+          {currentList}
+        </ListTag>
+      );
+      currentList = [];
+      listType = null;
+    }
+  };
+
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      renderList();
+      return;
+    }
+
+    const bulletMatch = line.match(/^(\s*)[-\*•]\s*(.*)/);
+    const numberMatch = line.match(/^(\s*)(\d+)[\.\)]\s*(.*)/);
+
+    if (bulletMatch) {
+      if (listType !== "bullet") {
+        renderList();
+        listType = "bullet";
+      }
+      currentList.push(
+        <li key={`li-${keyCounter++}`} className="pl-1">
+          {bulletMatch[2]}
+        </li>
+      );
+    } else if (numberMatch) {
+      if (listType !== "number") {
+        renderList();
+        listType = "number";
+      }
+      currentList.push(
+        <li key={`li-${keyCounter++}`} className="pl-1">
+          {numberMatch[3]}
+        </li>
+      );
+    } else {
+      renderList();
+      elements.push(
+        <p key={`p-${keyCounter++}`} className="text-muted-foreground leading-relaxed whitespace-pre-wrap mb-4 last:mb-0">
+          {line}
+        </p>
+      );
+    }
+  });
+
+  renderList();
+
+  return <div className="space-y-1">{elements}</div>;
+};
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const [product, setProduct] = useState<any>(null);
@@ -220,7 +291,7 @@ export default function ProductDetail() {
 
       <div className="grid lg:grid-cols-2 gap-6 md:gap-10 lg:gap-16">
         {/* Gallery Section */}
-        <div className="space-y-4">
+        <div className="space-y-4 lg:px-8 xl:px-16">
           <div className="relative aspect-square overflow-hidden rounded-3xl bg-secondary/50 shadow-soft group">
             {!imgLoaded && <div className="absolute inset-0 animate-pulse bg-secondary/70" />}
             <img 
@@ -249,17 +320,23 @@ export default function ProductDetail() {
           </div>
 
           {product.images.length > 1 && (
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto p-2 scrollbar-hide">
               {product.images.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => { setActiveImg(i); setImgLoaded(false); }}
                   className={cn(
-                    "relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-smooth",
-                    activeImg === i ? "border-primary scale-105" : "border-transparent opacity-70 hover:opacity-100"
+                    "relative h-20 w-20 shrink-0 overflow-hidden rounded-xl transition-all duration-300 group outline-none focus:outline-none",
+                    activeImg === i ? "scale-105 shadow-md" : "opacity-75 hover:opacity-100 hover:scale-105"
                   )}
                 >
                   <img src={img} alt={`${product.name} thumb ${i}`} className="h-full w-full object-cover" />
+                  <div 
+                    className={cn(
+                      "absolute inset-0 rounded-xl border-2 transition-all duration-300 pointer-events-none",
+                      activeImg === i ? "border-primary" : "border-border group-hover:border-primary/60"
+                    )} 
+                  />
                 </button>
               ))}
             </div>
@@ -378,7 +455,9 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          <p className="mt-6 text-muted-foreground leading-relaxed">{product.description}</p>
+          <div className="mt-6">
+            {formatDescription(product.description)}
+          </div>
 
           <div className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 mt-6 sm:mt-8 pointer-events-none">
             <div className="container md:p-0 pointer-events-auto">
@@ -510,7 +589,7 @@ export default function ProductDetail() {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground leading-relaxed px-1">
-                  {product.description}
+                  {formatDescription(product.description)}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
