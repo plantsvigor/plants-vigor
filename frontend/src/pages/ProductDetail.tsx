@@ -115,7 +115,7 @@ export default function ProductDetail() {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const [selectedPlanter, setSelectedPlanter] = useState<"gropot" | "krish">("gropot");
+  const [selectedPlanter, setSelectedPlanter] = useState<"gropot" | "krish">("krish");
   const { products: allProducts } = useProducts();
 
   useEffect(() => {
@@ -162,20 +162,36 @@ export default function ProductDetail() {
     }
   };
 
+  const handlePlanterChange = (type: "gropot" | "krish") => {
+    setSelectedPlanter(type);
+    if (product?.images && product.images.length > 0) {
+      const targetIdx = type === "gropot"
+        ? Math.min(2, product.images.length - 1)
+        : 0;
+      
+      if (activeImg !== targetIdx) {
+        setImgLoaded(false);
+        setActiveImg(targetIdx);
+      } else {
+        setImgLoaded(true);
+      }
+    }
+  };
+
   const handleAddToCart = () => {
     if (!product) return;
     const isKrish = selectedPlanter === "krish";
     const itemToAdd = {
       ...product,
       id: isKrish ? `${product.id}_krish` : product.id,
-      name: isKrish ? `${product.name} (Krish Planter)` : product.name,
+      name: isKrish ? `${product.name} (With Pot)` : `${product.name} (Without Pot)`,
       price: product.price + (isKrish ? 50 : 0),
       discountPrice: (product.discountPrice && product.discountPrice > 0)
         ? product.discountPrice + (isKrish ? 50 : 0)
         : undefined
     };
     add(itemToAdd, 1);
-    toast.success(`${isKrish ? `${product.name} with Krish Planter` : product.name} added to cart`);
+    toast.success(`${isKrish ? `${product.name} with Pot` : `${product.name} without Pot`} added to cart`);
   };
 
   const handleBuyNow = () => {
@@ -193,7 +209,7 @@ export default function ProductDetail() {
           from: "/checkout",
           buyNowItem: {
             productId: finalProductId,
-            name: isKrish ? `${product.name} (Krish Planter)` : product.name,
+            name: isKrish ? `${product.name} (With Pot)` : `${product.name} (Without Pot)`,
             price: finalPrice,
             image: product.images[0],
             quantity: 1
@@ -391,13 +407,13 @@ export default function ProductDetail() {
             )}
           </div>
           
-          {/* Select Planter Section */}
+          {/* Select Pot Section */}
           <div className="mt-6 sm:mt-8">
-            <h3 className="text-[13px] font-bold text-[#004d40] mb-3 uppercase tracking-wider">Select Planter</h3>
+            <h3 className="text-[13px] font-bold text-[#004d40] mb-3 uppercase tracking-wider">Select Pot</h3>
             <div className="flex gap-4 mt-4">
-              {/* GroPot Option */}
+              {/* Without Pot Option */}
               <button
-                onClick={() => setSelectedPlanter("gropot")}
+                onClick={() => handlePlanterChange("gropot")}
                 className={cn(
                   "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
                   selectedPlanter === "gropot" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
@@ -415,15 +431,15 @@ export default function ProductDetail() {
                     </svg>
                   </div>
                   <div className="flex flex-col items-start flex-1">
-                    <span className="font-medium text-sm text-foreground tracking-wide">GroPot</span>
+                    <span className="font-medium text-sm text-foreground tracking-wide">Without Pot</span>
                     <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice)}</span>
                   </div>
                 </div>
               </button>
 
-              {/* Krish Option */}
+              {/* With Pot Option */}
               <button
-                onClick={() => setSelectedPlanter("krish")}
+                onClick={() => handlePlanterChange("krish")}
                 className={cn(
                   "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
                   selectedPlanter === "krish" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
@@ -447,7 +463,7 @@ export default function ProductDetail() {
                     </svg>
                   </div>
                   <div className="flex flex-col items-start flex-1">
-                    <span className="font-medium text-sm text-foreground tracking-wide">Krish</span>
+                    <span className="font-medium text-sm text-foreground tracking-wide">With Pot</span>
                     <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice + 50)}</span>
                   </div>
                 </div>

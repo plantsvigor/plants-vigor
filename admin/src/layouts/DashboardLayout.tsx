@@ -13,11 +13,14 @@ import {
   Bell,
   Search,
   User as UserIcon,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/services/api";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -50,9 +53,56 @@ const SidebarItem = ({ to, icon, label, active }: SidebarItemProps) => (
 
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+
+  const { data: stats } = useQuery<any>({
+    queryKey: ["admin-stats-nav"],
+    queryFn: () => api.get("/admin/stats"),
+    refetchInterval: 30000,
+    enabled: !!user,
+  });
+
+  const notifications = React.useMemo(() => {
+    if (!stats) return [];
+    const list: any[] = [];
+
+    // Add low stock alerts
+    if (stats.lowStockProducts) {
+      stats.lowStockProducts.forEach((prod: any) => {
+        list.push({
+          id: `stock-${prod.id || prod._id}`,
+          type: "stock",
+          title: "Low Stock Alert",
+          description: `${prod.name || 'Product'} has only ${prod.stock ?? 0} left in stock`,
+          icon: <AlertTriangle className="h-4 w-4 text-orange-500" />,
+          to: "/products",
+          time: "Active alert",
+          rawTime: Date.now() + 1000, // keep low stock at top
+        });
+      });
+    }
+
+    // Add recent orders
+    if (stats.recentOrders) {
+      stats.recentOrders.forEach((order: any) => {
+        list.push({
+          id: `order-${order.id}`,
+          type: "order",
+          title: "New Order Received",
+          description: `Order #${order.orderCode || order.id?.slice(-6)} by ${order.address?.fullName || 'Guest'} - Rs. ${order.totalAmount}`,
+          icon: <ShoppingBag className="h-4 w-4 text-blue-500" />,
+          to: "/orders",
+          time: order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now",
+          rawTime: order.createdAt ? new Date(order.createdAt).getTime() : 0,
+        });
+      });
+    }
+
+    return list.sort((a, b) => b.rawTime - a.rawTime);
+  }, [stats]);
 
   const handleLogout = async () => {
     await logout();
@@ -134,10 +184,59 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-secondary rounded-xl relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-destructive rounded-full" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="p-2 hover:bg-secondary rounded-xl relative flex items-center justify-center transition-colors"
+              >
+                <Bell className="h-5 w-5 text-foreground/80 hover:text-foreground" />
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 bg-destructive text-destructive-foreground text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center scale-90">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {notifOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                  <div className="absolute right-0 mt-3 w-80 bg-card rounded-2xl border shadow-xl z-50 p-4 animate-fade-in-down max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <div className="flex items-center justify-between border-b pb-2 mb-3">
+                      <h4 className="font-bold text-sm">Notifications</h4>
+                      {notifications.length > 0 && (
+                        <span className="text-xs text-muted-foreground font-semibold bg-secondary px-2 py-0.5 rounded-full">{notifications.length} active</span>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      {notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <Link
+                            key={notif.id}
+                            to={notif.to}
+                            onClick={() => setNotifOpen(false)}
+                            className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-secondary transition-all border border-transparent hover:border-border"
+                          >
+                            <div className="p-2 bg-secondary rounded-lg flex-shrink-0 mt-0.5">
+                              {notif.icon}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-foreground">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{notif.description}</p>
+                              <span className="text-[9px] text-primary/70 font-bold uppercase tracking-wider block mt-1">{notif.time}</span>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="text-center py-10 text-muted-foreground text-xs font-medium">
+                          No new notifications
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
             <div className="h-10 w-[1px] bg-border mx-2" />
             <div className="flex items-center gap-3 pl-2">
               <div className="text-right hidden sm:block">

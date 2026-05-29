@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Leaf, ShieldCheck, Truck, Sprout, ChevronRight, MoveRight } from "lucide-react";
 import hero from "@/assets/hero-plants.jpg";
+import monstera from "@/assets/plant-monstera.jpg";
 import { Button } from "@/components/ui/button";
 import { categories, products } from "@/data/catalog";
 import ProductCard from "@/components/ProductCard";
@@ -103,7 +104,13 @@ export default function Home() {
         >
           {extendedHeroImages.map((src, i) => (
             <div key={i} className="relative flex-none w-full h-full">
-              <img src={src} alt="" className="h-full w-full object-cover" />
+              <img 
+                src={src} 
+                alt="" 
+                className="h-full w-full object-cover" 
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "low"}
+              />
               <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-background/20" />
             </div>
           ))}
@@ -262,9 +269,10 @@ export default function Home() {
             <div className="relative group animate-fade-up">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[3rem] shadow-card transition-smooth group-hover:shadow-glow">
                 <img
-                  src="/C:/Users/amitk/.gemini/antigravity/brain/b87fd7eb-04a5-4dce-bf1e-bfeb839ead58/plant_care_nurture_1778007107023.png"
+                  src={monstera}
                   alt="Nurturing plants"
                   className="h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 ring-1 ring-inset ring-black/5 rounded-[3rem]" />
               </div>

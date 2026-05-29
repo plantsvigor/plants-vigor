@@ -131,6 +131,7 @@ export default function DeliveredWithCare() {
                   loop
                   muted
                   playsInline
+                  preload="metadata"
                   onPlay={() => handlePlay(reel._id)}
                   onClick={(e) => {
                     const video = e.currentTarget;

@@ -1,4 +1,5 @@
 const { Order, orderStatusEnum } = require("../models/Order");
+const Product = require("../models/Product");
 const { sendOrderConfirmation, sendAdminOrderAlert } = require("../services/sendNotification");
 
 const serialize = (doc) => ({
@@ -67,6 +68,17 @@ const createOrder = async (req, res) => {
     createdAtMs: now,
     history: [{ status: "Pending", at: now }],
   });
+
+  // Decrement product stock
+  if (order.products && order.products.length > 0) {
+    for (const item of order.products) {
+      const baseId = item.productId.split("_")[0];
+      await Product.findOneAndUpdate(
+        { id: baseId },
+        { $inc: { stock: -item.quantity } }
+      );
+    }
+  }
 
   // Asynchronously trigger customer confirmation and admin alert
   try {
@@ -166,9 +178,37 @@ const updateStatus = async (req, res) => {
   if (!orderStatusEnum.includes(status)) return res.status(400).json({ message: "Invalid status" });
   const order = await Order.findOne({ orderCode: req.params.id });
   if (!order) return res.status(404).json({ message: "Order not found" });
+  
+  const oldStatus = order.status;
   order.status = status;
   order.history.push({ status, at: Date.now() });
   await order.save();
+
+  // If order status is changed to Cancelled, restore the stock
+  if (status === "Cancelled" && oldStatus !== "Cancelled") {
+    if (order.products && order.products.length > 0) {
+      for (const item of order.products) {
+        const baseId = item.productId.split("_")[0];
+        await Product.findOneAndUpdate(
+          { id: baseId },
+          { $inc: { stock: item.quantity } }
+        );
+      }
+    }
+  } 
+  // If order is uncancelled (changed from Cancelled to something else)
+  else if (oldStatus === "Cancelled" && status !== "Cancelled") {
+    if (order.products && order.products.length > 0) {
+      for (const item of order.products) {
+        const baseId = item.productId.split("_")[0];
+        await Product.findOneAndUpdate(
+          { id: baseId },
+          { $inc: { stock: -item.quantity } }
+        );
+      }
+    }
+  }
+
   res.json(serialize(order));
 };
 

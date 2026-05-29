@@ -12,10 +12,9 @@ if (!emailUser || !emailPass) {
 
 // Initialize Nodemailer SMTP Transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  pool: true, // Enable connection pooling
-  maxConnections: 5, // Concurrent connections
-  maxMessages: 100, // Messages per connection
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: emailUser,
     pass: emailPass,

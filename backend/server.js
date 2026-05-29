@@ -78,9 +78,9 @@ app.use("/api", limiter);
 
 // Dedicated rate limiter for OTP endpoints to prevent email exhaustion/abuse
 const otpLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000, // 10 minutes window
+  windowMs: 30 * 1000, // 30 seconds window
   max: 5, // limit each IP to 5 requests per window
-  message: { message: "Too many OTP requests. Please try again after 10 minutes." },
+  message: { message: "Too many OTP requests. Please try again after 30 seconds." },
   standardHeaders: true,
   legacyHeaders: false,
 });

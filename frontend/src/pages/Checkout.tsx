@@ -67,7 +67,7 @@ export default function Checkout() {
       const product = {
         ...baseProduct,
         id: i.productId,
-        name: isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name,
+        name: isKrish ? `${baseProduct.name} (With Pot)` : `${baseProduct.name} (Without Pot)`,
         price: baseProduct.price + (isKrish ? 50 : 0),
         discountPrice: (baseProduct.discountPrice && baseProduct.discountPrice > 0)
           ? baseProduct.discountPrice + (isKrish ? 50 : 0)
@@ -95,7 +95,7 @@ export default function Checkout() {
       qty: buyNowQty, 
       product: {
         id: buyNowItem.productId,
-        name: buyNowItem.name ?? (isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name),
+        name: buyNowItem.name ?? (isKrish ? `${baseProduct.name} (With Pot)` : `${baseProduct.name} (Without Pot)`),
         price: resolvedPrice,
         images: [resolvedImage]
       }
@@ -301,7 +301,7 @@ export default function Checkout() {
             {addressesLoading ? (
               <div className="py-10 text-center animate-pulse text-muted-foreground font-medium">Loading addresses...</div>
             ) : addresses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar pb-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto px-1 py-1 pr-2 custom-scrollbar pb-2">
                 {addresses.map((addr) => (
                   <div 
                     key={addr._id} 
@@ -309,17 +309,31 @@ export default function Checkout() {
                     className={cn(
                       "relative cursor-pointer rounded-2xl border-2 p-4 transition-all duration-300 group flex flex-col justify-between",
                       selectedAddressId === addr._id 
-                        ? "border-primary bg-primary/5 shadow-md scale-[1.02] z-10" 
+                        ? "border-green-600 ring-1 ring-green-600 bg-green-600/5 shadow-md scale-[1.02] z-10" 
                         : "border-secondary/20 bg-secondary/10 hover:bg-secondary/20"
                     )}
                   >
                     <div>
                       <div className="flex justify-between items-start mb-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-bold text-base text-foreground line-clamp-1">{addr.fullName}</span>
-                          {addr.isDefault && (
-                            <span className="bg-primary text-white text-[8px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Default</span>
-                          )}
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all duration-300 flex-shrink-0",
+                            selectedAddressId === addr._id 
+                              ? "border-green-600 bg-green-600 text-white shadow-sm" 
+                              : "border-muted-foreground/30 bg-background"
+                          )}>
+                            {selectedAddressId === addr._id && (
+                              <svg className="h-3.5 w-3.5 stroke-[3]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-bold text-base text-foreground line-clamp-1">{addr.fullName}</span>
+                            {addr.isDefault && (
+                              <span className="bg-primary text-white text-[8px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Default</span>
+                            )}
+                          </div>
                         </div>
                         <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
                           <Button 

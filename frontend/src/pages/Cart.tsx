@@ -20,7 +20,7 @@ export default function Cart() {
     const product = {
       ...baseProduct,
       id: i.productId,
-      name: isKrish ? `${baseProduct.name} (Krish Planter)` : baseProduct.name,
+      name: isKrish ? `${baseProduct.name} (With Pot)` : `${baseProduct.name} (Without Pot)`,
       price: baseProduct.price + (isKrish ? 50 : 0),
       discountPrice: (baseProduct.discountPrice && baseProduct.discountPrice > 0)
         ? baseProduct.discountPrice + (isKrish ? 50 : 0)
