@@ -511,7 +511,10 @@ export default function ProductDetail() {
             {formatDescription(product.shortDescription || product.description)}
           </div>
 
-          <div className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 mt-6 sm:mt-8 pointer-events-none">
+          <div 
+            className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 md:mt-8 pointer-events-none"
+            style={{ transform: "translate3d(0, 0, 0)", bottom: 0 }}
+          >
             <div className="container md:p-0 pointer-events-auto">
               <div className="flex items-center gap-3">
                 <Button 
