@@ -146,6 +146,14 @@ const deleteUser = async (req, res) => {
 // @desc    Manage Products (CRUD)
 const createProduct = async (req, res) => {
   try {
+    if (req.body.name) {
+      const existingProduct = await Product.findOne({
+        name: { $regex: new RegExp(`^${req.body.name.trim()}$`, "i") }
+      });
+      if (existingProduct) {
+        return res.status(400).json({ message: "these product already exist" });
+      }
+    }
     const product = new Product(req.body);
     const savedProduct = await product.save();
     res.status(201).json(savedProduct);
@@ -156,6 +164,15 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
+    if (req.body.name) {
+      const existingProduct = await Product.findOne({
+        name: { $regex: new RegExp(`^${req.body.name.trim()}$`, "i") },
+        id: { $ne: req.params.id }
+      });
+      if (existingProduct) {
+        return res.status(400).json({ message: "these product already exist" });
+      }
+    }
     const product = await Product.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);

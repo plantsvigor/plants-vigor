@@ -78,7 +78,8 @@ export default function ProductCard({ product, className }: { product: Product; 
           loading="lazy"
           className={cn(
             "h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-105",
-            showSecond ? "opacity-0" : "opacity-100"
+            showSecond ? "opacity-0" : "opacity-100",
+            product.stock === 0 && "blur-[2px] grayscale-[20%] opacity-85"
           )}
         />
         {images.length > 1 && (
@@ -88,16 +89,24 @@ export default function ProductCard({ product, className }: { product: Product; 
             loading="lazy"
             className={cn(
               "absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110",
-              showSecond ? "opacity-100 scale-105" : "opacity-0"
+              showSecond ? "opacity-100 scale-105" : "opacity-0",
+              product.stock === 0 && "blur-[2px] grayscale-[20%] opacity-85"
             )}
           />
         )}
-        {discountPct > 0 && (
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-10">
+            <span className="bg-destructive text-white text-[11px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md border border-white/10 animate-pulse">
+              Out of Stock
+            </span>
+          </div>
+        )}
+        {discountPct > 0 && product.stock > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-accent px-2.5 py-1 text-[10px] font-bold text-accent-foreground shadow-sm">
             {discountPct}% OFF
           </span>
         )}
-        {product.bestSeller && (
+        {product.bestSeller && product.stock > 0 && (
           <span className="absolute left-3 bottom-3 z-10 rounded-full bg-primary px-2.5 py-1 text-[10px] font-semibold text-primary-foreground">
             Bestseller
           </span>
@@ -162,10 +171,14 @@ export default function ProductCard({ product, className }: { product: Product; 
         <div className="mt-4 pb-2">
           <Button
             onClick={handleAddToCart}
+            disabled={product.stock === 0}
             variant="outline"
-            className="w-full rounded-[14px] border-gray-400 text-[#111] hover:bg-gray-50 h-[42px] text-[15px] font-normal"
+            className={cn(
+              "w-full rounded-[14px] border-gray-400 text-[#111] hover:bg-gray-50 h-[42px] text-[15px] font-normal transition-all",
+              product.stock === 0 && "opacity-50 grayscale cursor-not-allowed border-gray-300 text-gray-400 bg-gray-50 hover:bg-gray-50 pointer-events-none"
+            )}
           >
-            Add to cart
+            {product.stock === 0 ? "Out of Stock" : "Add to cart"}
           </Button>
         </div>
       </div>

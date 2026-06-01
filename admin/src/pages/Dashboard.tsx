@@ -197,10 +197,12 @@ export default function Dashboard() {
                     <span className="font-medium group-hover:text-primary transition-colors">{product.name || 'Unknown Product'}</span>
                   </td>
 
-                  <td className="py-4 font-bold text-red-500">{product.stock ?? 0}</td>
+                  <td className="py-4 font-bold text-red-500">
+                    {product.stock === 0 ? "Out of Stock" : `${product.stock ?? 0} left`}
+                  </td>
                   <td className="py-4">
-                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">
-                      Critical
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${product.stock === 0 ? 'bg-red-200 text-red-800 animate-pulse' : 'bg-orange-100 text-orange-700'}`}>
+                      {product.stock === 0 ? 'Out of Stock' : 'Critical'}
                     </span>
                   </td>
                 </tr>

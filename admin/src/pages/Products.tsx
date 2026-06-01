@@ -143,8 +143,10 @@ export default function Products() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${product.stock > 10 ? 'bg-green-500' : 'bg-red-500'}`} />
-                      <span className="text-xs font-semibold">{product.stock} in stock</span>
+                      <div className={`w-1.5 h-1.5 rounded-full ${product.stock > 10 ? 'bg-green-500' : product.stock > 0 ? 'bg-amber-500' : 'bg-red-500'}`} />
+                      <span className={`text-xs font-semibold ${product.stock === 0 ? "text-red-600 font-bold" : ""}`}>
+                        {product.stock > 0 ? `${product.stock} in stock` : "Out of Stock"}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">

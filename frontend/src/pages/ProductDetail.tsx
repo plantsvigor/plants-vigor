@@ -319,7 +319,7 @@ export default function ProductDetail() {
                 imgLoaded ? "opacity-100" : "opacity-0"
               )} 
             />
-            {discount > 0 && (
+            {discount > 0 && product.stock > 0 && (
               <span className="absolute left-4 top-4 z-10 rounded-full bg-accent px-3 py-1.5 text-xs font-bold text-accent-foreground shadow-sm">
                 {discount}% OFF
               </span>
@@ -478,10 +478,27 @@ export default function ProductDetail() {
           <div className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 mt-6 sm:mt-8 pointer-events-none">
             <div className="container md:p-0 pointer-events-auto">
               <div className="flex items-center gap-3">
-                <Button size="lg" variant="outline" className="flex-1 rounded-full border-primary text-primary bg-background/90 hover:bg-background h-12 md:h-11 text-sm md:text-base shadow-lg" onClick={handleAddToCart}>
-                  <ShoppingBag className="mr-2 h-4 w-4" /> Add to cart
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  disabled={product.stock === 0}
+                  className={cn(
+                    "flex-1 rounded-full border-primary text-primary bg-background/90 hover:bg-background h-12 md:h-11 text-sm md:text-base shadow-lg transition-all",
+                    product.stock === 0 && "opacity-50 grayscale cursor-not-allowed border-gray-300 text-gray-400 bg-gray-50 hover:bg-gray-50 pointer-events-none"
+                  )}
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4" /> {product.stock === 0 ? "Out of stock" : "Add to cart"}
                 </Button>
-                <Button size="lg" className="flex-1 rounded-full shadow-lg h-12 md:h-11 text-sm md:text-base" onClick={handleBuyNow}>
+                <Button 
+                  size="lg" 
+                  disabled={product.stock === 0}
+                  className={cn(
+                    "flex-1 rounded-full shadow-lg h-12 md:h-11 text-sm md:text-base transition-all",
+                    product.stock === 0 && "opacity-50 grayscale cursor-not-allowed bg-gray-200 text-gray-400 pointer-events-none shadow-none"
+                  )}
+                  onClick={handleBuyNow}
+                >
                   <Zap className="mr-2 h-4 w-4 fill-current" /> Buy now
                 </Button>
                 <Button size="lg" variant="ghost" className="hidden md:flex h-11 w-11 rounded-full border bg-secondary/30 hover:bg-secondary/50 p-0" onClick={handleShare} aria-label="Share">
@@ -535,7 +552,10 @@ export default function ProductDetail() {
             </DialogContent>
           </Dialog>
 
-          <div className="mt-3 text-sm text-muted-foreground">{product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}</div>
+          <div className={cn("mt-3 text-sm flex items-center gap-2", product.stock > 0 ? "text-muted-foreground" : "text-destructive font-bold animate-pulse")}>
+            <div className={cn("w-2 h-2 rounded-full", product.stock > 0 ? "bg-emerald-500" : "bg-red-500")} />
+            {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
+          </div>
 
           <div className="mt-8">
             <Accordion type="single" collapsible className="w-full">

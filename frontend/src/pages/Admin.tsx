@@ -142,7 +142,16 @@ function ProductsAdmin() {
                   </td>
                   <td className="p-3">{p.category}</td>
                   <td className="p-3">{formatINR(o.price ?? p.price)}{(o.discountPrice ?? p.discountPrice) ? <span className="text-xs text-primary"> · {formatINR(o.discountPrice ?? p.discountPrice!)}</span> : null}</td>
-                  <td className="p-3">{o.stock ?? p.stock}</td>
+                  <td className="p-3">
+                    {(() => {
+                      const stockVal = o.stock ?? p.stock;
+                      return stockVal > 0 ? (
+                        stockVal
+                      ) : (
+                        <span className="text-red-500 font-bold">Out of Stock</span>
+                      );
+                    })()}
+                  </td>
                   <td className="p-3 text-right">
                     <Button variant="ghost" size="sm" onClick={() => startEdit(p.id)}>Edit</Button>
                     <Button variant="ghost" size="sm" onClick={() => { hidden ? unhideProduct(p.id) : hideProduct(p.id); toast(hidden ? "Visible" : "Hidden"); }}>
