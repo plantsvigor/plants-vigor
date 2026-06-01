@@ -8,14 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogClose
-} from "@/components/ui/dialog";
+
 import { formatINR, products } from "@/data/catalog";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/store/cart";
@@ -135,7 +128,6 @@ export default function ProductDetail() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [selectedPlanter, setSelectedPlanter] = useState<"gropot" | "krish">("krish");
@@ -173,7 +165,12 @@ export default function ProductDetail() {
         console.log("Error sharing:", err);
       }
     }
-    setIsShareOpen(true);
+    try {
+      await navigator.clipboard.writeText(productUrl);
+      toast.success("Link copied to clipboard!");
+    } catch (err) {
+      toast.error("Failed to copy link");
+    }
   };
 
   const copyToClipboard = async () => {
@@ -278,30 +275,7 @@ export default function ProductDetail() {
     </div>
   );
 
-  const shareOptions = [
-    { 
-      name: "WhatsApp", 
-      icon: (
-        <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
-          <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.262 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.66.986 3.288 1.488 4.954 1.49h.005c5.385 0 9.766-4.381 9.77-9.766 0-2.61-1.014-5.059-2.857-6.902C16.628 2.13 14.183 1.11 11.58 1.117c-5.389 0-9.775 4.382-9.779 9.769-.001 1.83.5 3.568 1.461 5.051l-.969 3.543 3.634-.954zm10.962-7.533c-.301-.15-1.781-.879-2.053-.978-.271-.1-.47-.15-.669.15-.198.3-.77.978-.944 1.177-.173.2-.347.225-.648.075-.302-.15-1.272-.469-2.423-1.495-.897-.8-1.502-1.79-1.678-2.09-.176-.3-.019-.462.13-.611.135-.134.3-.349.45-.524.15-.174.2-.299.3-.499.1-.2.05-.375-.025-.524-.075-.15-.669-1.611-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.299-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.781-.728 2.03-1.43.248-.699.248-1.298.174-1.424-.074-.124-.272-.198-.57-.349z"/>
-        </svg>
-      ), 
-      url: `https://wa.me/?text=Check this product: ${product.name} ${productUrl}`,
-      color: "hover:bg-green-50 text-green-600 border-green-200"
-    },
-    { 
-      name: "Facebook", 
-      icon: <Facebook className="h-5 w-5" />, 
-      url: `https://www.facebook.com/sharer/sharer.php?u=${productUrl}`,
-      color: "hover:bg-blue-50 text-blue-600 border-blue-200"
-    },
-    { 
-      name: "Twitter", 
-      icon: <Twitter className="h-5 w-5" />, 
-      url: `https://twitter.com/intent/tweet?text=Check this product: ${product.name}&url=${productUrl}`,
-      color: "hover:bg-sky-50 text-sky-500 border-sky-200"
-    }
-  ];
+
 
   const baseSellingPrice = (product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price;
   const baseOriginalPrice = product.price;
@@ -557,44 +531,7 @@ export default function ProductDetail() {
             </Button>
           </div>
 
-          <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-            <DialogContent className="w-[92vw] max-w-[360px] rounded-[24px] sm:rounded-3xl p-5 sm:p-6 gap-4 border bg-background shadow-2xl">
-              <DialogHeader>
-                <DialogTitle className="font-display text-xl sm:text-2xl text-foreground text-center">Share Product</DialogTitle>
-              </DialogHeader>
-              <div className="flex items-center justify-center gap-4 py-2 sm:py-4">
-                {shareOptions.map((option) => (
-                  <a
-                    key={option.name}
-                    href={option.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => {
-                      if (option.onClick) {
-                        e.preventDefault();
-                        option.onClick();
-                        setIsShareOpen(false);
-                      }
-                    }}
-                    title={option.name}
-                    aria-label={`Share on ${option.name}`}
-                    className={cn(
-                      "flex items-center justify-center h-12 w-12 rounded-full border shadow-sm transition-all duration-300 hover:scale-110 active:scale-95",
-                      option.color
-                    )}
-                  >
-                    {option.icon}
-                  </a>
-                ))}
-              </div>
-              <div className="mt-1 sm:mt-2 flex items-center gap-2 rounded-2xl border bg-secondary/30 p-1.5 sm:p-2">
-                <div className="flex-1 truncate text-xs sm:text-sm text-muted-foreground px-2 font-medium">{productUrl}</div>
-                <Button size="sm" variant="secondary" className="rounded-xl shrink-0 h-9 text-xs sm:text-sm font-semibold" onClick={copyToClipboard}>
-                  <Copy className="mr-1.5 sm:mr-2 h-3.5 w-3.5" /> Copy
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+
 
           <div className={cn("mt-3 text-sm flex items-center gap-2", product.stock > 0 ? "text-muted-foreground" : "text-destructive font-bold animate-pulse")}>
             <div className={cn("w-2 h-2 rounded-full", product.stock > 0 ? "bg-emerald-500" : "bg-red-500")} />
