@@ -18,7 +18,6 @@ import Wishlist from "@/pages/Wishlist";
 import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import MyOrders from "@/pages/MyOrders";
-import Admin from "@/pages/Admin";
 import NotFound from "@/pages/NotFound";
 import MyProfile from "@/pages/MyProfile";
 
@@ -27,7 +26,6 @@ import { WishlistProvider } from "@/store/wishlist";
 import { AuthProvider } from "@/store/auth";
 import { OrdersProvider } from "@/store/orders";
 import { ReviewsProvider } from "@/store/reviews";
-import { AdminCatalogProvider } from "@/store/adminCatalog";
 import { AddressProvider } from "@/store/address";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -75,9 +73,8 @@ const App = () => {
                     <WishlistProvider>
                       <ReviewsProvider>
                         <OrdersProvider>
-                          <AdminCatalogProvider>
-                            <Layout>
-                              <Routes>
+                          <Layout>
+                            <Routes>
                               <Route path="/" element={<Home />} />
                               <Route path="/category/plants" element={<Shop />} />
                               <Route path="/category/:slug" element={<CategoryPage />} />
@@ -91,15 +88,13 @@ const App = () => {
                               <Route path="/signup" element={<Signup />} />
                               <Route path="/orders" element={<MyOrders />} />
                               <Route path="/profile" element={<MyProfile />} />
-                              <Route path="/admin/*" element={<Admin />} />
                               <Route path="*" element={<NotFound />} />
                             </Routes>
                           </Layout>
-                        </AdminCatalogProvider>
-                      </OrdersProvider>
-                    </ReviewsProvider>
-                </WishlistProvider>
-              </CartProvider>
+                        </OrdersProvider>
+                      </ReviewsProvider>
+                  </WishlistProvider>
+                </CartProvider>
               </AddressProvider>
             </AuthProvider>
           </BrowserRouter>

@@ -63,7 +63,6 @@ export default function Login() {
           />
         </div>
         <p className="text-sm text-center text-muted-foreground">Don't have an account? <Link to="/signup" className="text-primary font-medium hover:underline">Sign up</Link></p>
-        <p className="text-xs text-center text-muted-foreground">💡 Use any email containing "admin" to access the admin panel.</p>
       </form>
     </div>
   );

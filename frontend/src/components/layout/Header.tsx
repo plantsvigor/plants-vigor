@@ -321,7 +321,6 @@ export default function Header() {
                   <DropdownMenuItem asChild><Link to="/profile">My profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/orders">My orders</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link to="/track-order">Track order</Link></DropdownMenuItem>
-                  {user.role === "admin" && <DropdownMenuItem asChild><Link to="/admin">Admin panel</Link></DropdownMenuItem>}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={logout}><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
                 </>
