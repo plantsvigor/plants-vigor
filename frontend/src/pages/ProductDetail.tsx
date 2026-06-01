@@ -554,11 +554,11 @@ export default function ProductDetail() {
           </div>
 
           <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
-            <DialogContent className="sm:max-w-md rounded-3xl">
+            <DialogContent className="w-[92vw] max-w-[440px] sm:max-w-md rounded-[24px] sm:rounded-3xl p-5 sm:p-6 gap-4 border bg-background shadow-2xl">
               <DialogHeader>
-                <DialogTitle className="font-display text-2xl">Share Product</DialogTitle>
+                <DialogTitle className="font-display text-xl sm:text-2xl text-foreground text-center">Share Product</DialogTitle>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 py-2 sm:py-4">
                 {shareOptions.map((option) => (
                   <a
                     key={option.name}
@@ -573,7 +573,7 @@ export default function ProductDetail() {
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-3 rounded-2xl border p-4 transition-smooth",
+                      "flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3 rounded-2xl border p-3.5 sm:p-4 text-xs sm:text-sm font-semibold transition-smooth",
                       option.color
                     )}
                   >
@@ -582,10 +582,10 @@ export default function ProductDetail() {
                   </a>
                 ))}
               </div>
-              <div className="mt-2 flex items-center gap-2 rounded-2xl border bg-secondary/30 p-2">
-                <div className="flex-1 truncate text-sm text-muted-foreground px-2">{productUrl}</div>
-                <Button size="sm" variant="secondary" className="rounded-xl shrink-0" onClick={copyToClipboard}>
-                  <Copy className="mr-2 h-3.5 w-3.5" /> Copy
+              <div className="mt-1 sm:mt-2 flex items-center gap-2 rounded-2xl border bg-secondary/30 p-1.5 sm:p-2">
+                <div className="flex-1 truncate text-xs sm:text-sm text-muted-foreground px-2 font-medium">{productUrl}</div>
+                <Button size="sm" variant="secondary" className="rounded-xl shrink-0 h-9 text-xs sm:text-sm font-semibold" onClick={copyToClipboard}>
+                  <Copy className="mr-1.5 sm:mr-2 h-3.5 w-3.5" /> Copy
                 </Button>
               </div>
             </DialogContent>
