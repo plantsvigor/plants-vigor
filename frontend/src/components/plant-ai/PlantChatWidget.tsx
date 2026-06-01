@@ -1,12 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MessageSquare, X, Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PlantChatbot from "./PlantChatbot";
+import { useAuth } from "@/store/auth";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function PlantChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  console.log("PlantChatWidget Rendering, isOpen:", isOpen);
+  useEffect(() => {
+    if (user && location.state?.openChat) {
+      setIsOpen(true);
+      // Clear openChat from history state to prevent reopening on reload/navigation
+      navigate(location.pathname, {
+        replace: true,
+        state: { ...location.state, openChat: undefined }
+      });
+    }
+  }, [user, location.state, navigate, location.pathname]);
+
+  const handleToggle = () => {
+    if (!user) {
+      toast.info("Please log in first to chat with Apna Mali");
+      navigate("/login", { state: { from: location.pathname, openChat: true } });
+      return;
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const showWidget = location.pathname === "/" || location.pathname.replace(/\/$/, "") === "/orders";
+
+  if (!showWidget) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-4 pointer-events-auto">
@@ -33,7 +61,7 @@ export default function PlantChatWidget() {
       )}
 
       <Button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         size="icon"
         className="h-14 w-14 rounded-full shadow-2xl transition-transform hover:scale-110 active:scale-95 bg-primary text-white"
       >

@@ -62,7 +62,7 @@ export default function Login() {
             onError={() => toast.error("Google Login Failed")}
           />
         </div>
-        <p className="text-sm text-center text-muted-foreground">Don't have an account? <Link to="/signup" className="text-primary font-medium hover:underline">Sign up</Link></p>
+        <p className="text-sm text-center text-muted-foreground">Don't have an account? <Link to="/signup" state={state} className="text-primary font-medium hover:underline">Sign up</Link></p>
       </form>
     </div>
   );

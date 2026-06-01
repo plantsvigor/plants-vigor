@@ -99,7 +99,7 @@ export default function Signup() {
             <Button type="submit" className="w-full rounded-full" size="lg">Create account</Button>
           </>
         )}
-        <p className="text-sm text-center text-muted-foreground">Already have an account? <Link to="/login" className="text-primary font-medium hover:underline">Sign in</Link></p>
+        <p className="text-sm text-center text-muted-foreground">Already have an account? <Link to="/login" state={state} className="text-primary font-medium hover:underline">Sign in</Link></p>
       </form>
     </div>
   );

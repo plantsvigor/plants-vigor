@@ -34,24 +34,26 @@ export default function Footer() {
           </div>
         </div>
 
-        <div>
-          <h4 className="text-sm font-semibold mb-4">Shop</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            {categories.slice(0, 6).map(c => (
-              <li key={c.slug}><Link to={`/category/${c.slug}`} className="hover:text-primary">{c.name}</Link></li>
-            ))}
-          </ul>
-        </div>
+        <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2 md:grid-cols-2 md:gap-10">
+          <div>
+            <h4 className="text-sm font-semibold mb-4">Shop</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              {categories.slice(0, 6).map(c => (
+                <li key={c.slug}><Link to={`/category/${c.slug}`} className="hover:text-primary">{c.name}</Link></li>
+              ))}
+            </ul>
+          </div>
 
-        <div>
-          <h4 className="text-sm font-semibold mb-4">Help</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/track-order" className="hover:text-primary">Track Order</Link></li>
-            <li><Link to="/orders" className="hover:text-primary">My Orders</Link></li>
-            <li><a href="#" className="hover:text-primary">Shipping & Returns</a></li>
-            <li><a href="#" className="hover:text-primary">Plant Care Guide</a></li>
-            <li><a href="#" className="hover:text-primary">Contact us</a></li>
-          </ul>
+          <div>
+            <h4 className="text-sm font-semibold mb-4">Help</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/track-order" className="hover:text-primary">Track Order</Link></li>
+              <li><Link to="/orders" className="hover:text-primary">My Orders</Link></li>
+              <li><a href="#" className="hover:text-primary">Shipping & Returns</a></li>
+              <li><a href="#" className="hover:text-primary">Plant Care Guide</a></li>
+              <li><a href="#" className="hover:text-primary">Contact us</a></li>
+            </ul>
+          </div>
         </div>
 
         <div>
