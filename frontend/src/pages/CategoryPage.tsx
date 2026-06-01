@@ -1,10 +1,14 @@
 import { useParams, Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { categories, CategorySlug } from "@/data/catalog";
 import ProductCard from "@/components/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useBanners } from "@/hooks/useBanners";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const ITEMS_PER_PAGE = 28;
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: CategorySlug }>();
@@ -12,6 +16,12 @@ export default function CategoryPage() {
   const { getBannerForSlug } = useBanners();
   const cat = categories.find(c => c.slug === slug);
   const [sort, setSort] = useState<string>("recommended");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to first page when parameters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [slug, sort]);
 
   const activeBanner = getBannerForSlug(slug || "") || "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=2000&auto=format&fit=crop";
 
@@ -34,6 +44,12 @@ export default function CategoryPage() {
     if (sort === "rating") list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
     return list;
   }, [products, slug, sort]);
+
+  const totalPages = Math.ceil(sortedList.length / ITEMS_PER_PAGE);
+  const paginatedList = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return sortedList.slice(start, start + ITEMS_PER_PAGE);
+  }, [sortedList, currentPage]);
 
   if (loading) {
     return (
@@ -95,9 +111,61 @@ export default function CategoryPage() {
         {sortedList.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">No products in this category yet.</p>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-4">
-            {sortedList.map(p => <ProductCard key={p.id} product={p} />)}
-          </div>
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 md:gap-4">
+              {paginatedList.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="mt-12 flex items-center justify-center gap-1.5 sm:gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setCurrentPage(prev => Math.max(prev - 1, 1));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === 1}
+                  className="h-9 w-9 rounded-xl border-border bg-background hover:bg-secondary text-foreground transition-smooth"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => {
+                      setCurrentPage(page);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={cn(
+                      "h-9 w-9 rounded-xl text-xs sm:text-sm font-semibold transition-smooth",
+                      currentPage === page
+                        ? "bg-primary text-white hover:bg-primary/95"
+                        : "border-border bg-background hover:bg-secondary text-foreground"
+                    )}
+                  >
+                    {page}
+                  </Button>
+                ))}
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="h-9 w-9 rounded-xl border-border bg-background hover:bg-secondary text-foreground transition-smooth"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
