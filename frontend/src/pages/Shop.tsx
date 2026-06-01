@@ -12,7 +12,11 @@ export default function Shop() {
 
   const filtered = useMemo(() => {
     let list = (products || []).filter(p => {
-      if (cat !== "all" && p.category !== cat && p.subCategory !== cat) return false;
+      if (cat !== "all") {
+        const matchesCat = Array.isArray(p.category) ? p.category.includes(cat) : p.category === cat;
+        const matchesSub = Array.isArray(p.subCategory) ? p.subCategory.includes(cat) : p.subCategory === cat;
+        if (!matchesCat && !matchesSub) return false;
+      }
       if (q.trim() && !(`${p.name} ${p.description}`.toLowerCase().includes(q.toLowerCase()))) return false;
       return true;
     });

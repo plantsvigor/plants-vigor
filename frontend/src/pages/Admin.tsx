@@ -140,7 +140,9 @@ function ProductsAdmin() {
                     <img src={p.images[0]} alt="" className="h-10 w-10 rounded-md object-cover" />
                     <div className={hidden ? "opacity-50" : ""}><div className="font-medium">{o.name ?? p.name}</div><div className="text-xs text-muted-foreground">{p.id}</div></div>
                   </td>
-                  <td className="p-3">{p.category}</td>
+                  <td className="p-3">
+                    {Array.isArray(p.category) ? p.category.join(", ") : p.category}
+                  </td>
                   <td className="p-3">{formatINR(o.price ?? p.price)}{(o.discountPrice ?? p.discountPrice) ? <span className="text-xs text-primary"> · {formatINR(o.discountPrice ?? p.discountPrice!)}</span> : null}</td>
                   <td className="p-3">
                     {(() => {
@@ -231,7 +233,9 @@ function CategoriesAdmin() {
           <div key={c.slug} className="rounded-xl border bg-card p-4 flex items-center gap-3">
             <img src={c.image} alt="" className="h-12 w-12 rounded-full object-cover bg-secondary" />
             <div className="flex-1"><div className="font-semibold">{c.name}</div><div className="text-xs text-muted-foreground">{c.tagline}</div></div>
-            <span className="text-xs text-muted-foreground">{products.filter(p => p.category === c.slug).length} items</span>
+            <span className="text-xs text-muted-foreground">
+              {products.filter(p => Array.isArray(p.category) ? p.category.includes(c.slug) : p.category === c.slug).length} items
+            </span>
           </div>
         ))}
       </div>

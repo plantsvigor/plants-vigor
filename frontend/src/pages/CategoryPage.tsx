@@ -16,7 +16,11 @@ export default function CategoryPage() {
   const activeBanner = getBannerForSlug(slug || "") || "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?q=80&w=2000&auto=format&fit=crop";
 
   const sortedList = useMemo(() => {
-    let list = (products || []).filter(p => p.category === slug || p.subCategory === slug);
+    let list = (products || []).filter(p => {
+      const matchesCat = Array.isArray(p.category) ? p.category.includes(slug || "") : p.category === slug;
+      const matchesSub = Array.isArray(p.subCategory) ? p.subCategory.includes(slug || "") : p.subCategory === slug;
+      return matchesCat || matchesSub;
+    });
     if (sort === "price-asc") list = [...list].sort((a, b) => {
       const pA = (a.discountPrice && a.discountPrice > 0) ? a.discountPrice : a.price;
       const pB = (b.discountPrice && b.discountPrice > 0) ? b.discountPrice : b.price;

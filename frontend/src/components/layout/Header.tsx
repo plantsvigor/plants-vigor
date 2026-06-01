@@ -155,10 +155,13 @@ export default function Header() {
   };
 
   const filteredProducts = allProducts
-    .filter(p => 
-      p.name.toLowerCase().includes(debouncedQ.toLowerCase()) || 
-      p.category.toLowerCase().includes(debouncedQ.toLowerCase())
-    )
+    .filter(p => {
+      const nameMatch = p.name.toLowerCase().includes(debouncedQ.toLowerCase());
+      const catMatch = Array.isArray(p.category)
+        ? p.category.some(c => c.toLowerCase().includes(debouncedQ.toLowerCase()))
+        : p.category.toLowerCase().includes(debouncedQ.toLowerCase());
+      return nameMatch || catMatch;
+    })
     .sort((a, b) => {
       const query = debouncedQ.toLowerCase();
       const aStarts = a.name.toLowerCase().startsWith(query);
@@ -264,7 +267,11 @@ export default function Header() {
                         />
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-semibold truncate text-foreground">{p.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{p.category.replace("-", " ")}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {Array.isArray(p.category)
+                              ? p.category.map(c => c.replace("-", " ")).join(", ")
+                              : p.category.replace("-", " ")}
+                          </p>
                         </div>
                         <div className="text-sm font-bold text-[#008744] shrink-0">
                           {formatINR(p.discountPrice && p.discountPrice > 0 ? p.discountPrice : p.price)}
@@ -449,7 +456,11 @@ export default function Header() {
                         />
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-semibold truncate text-foreground">{p.name}</h4>
-                          <p className="text-xs text-muted-foreground capitalize">{p.category.replace("-", " ")}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {Array.isArray(p.category)
+                              ? p.category.map(c => c.replace("-", " ")).join(", ")
+                              : p.category.replace("-", " ")}
+                          </p>
                         </div>
                         <div className="text-sm font-bold text-[#008744] shrink-0">
                           {formatINR(p.discountPrice && p.discountPrice > 0 ? p.discountPrice : p.price)}

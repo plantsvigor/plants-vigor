@@ -3,6 +3,7 @@ import { X, Loader2, Plus, Trash2 } from "lucide-react";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { CATEGORY_MAP } from "@/constants/categories";
+import { MultiSelectDropdown } from "./MultiSelectDropdown";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -29,8 +30,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
     bestSeller: false,
     images: [],
     tags: [],
-    category: "",
-    subCategory: ""
+    category: [],
+    subCategory: []
   });
 
 
@@ -40,11 +41,26 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
       const calculatedPct = (product.price && product.discountPrice && product.discountPrice < product.price)
         ? Math.round((1 - product.discountPrice / product.price) * 100)
         : "";
+      
+      const categoryArray = Array.isArray(product.category)
+        ? product.category
+        : product.category
+          ? [product.category]
+          : [];
+      
+      const subCategoryArray = Array.isArray(product.subCategory)
+        ? product.subCategory
+        : product.subCategory
+          ? [product.subCategory]
+          : [];
+
       setFormData({
         ...product,
         price: product.price || "",
         discountPrice: product.discountPrice || "",
-        discountPercentage: calculatedPct
+        discountPercentage: calculatedPct,
+        category: categoryArray,
+        subCategory: subCategoryArray
       });
     } else {
       setFormData({
@@ -60,8 +76,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
         bestSeller: false,
         images: [],
         tags: [],
-        category: "",
-        subCategory: ""
+        category: [],
+        subCategory: []
       });
     }
   }, [product, isOpen]);
@@ -187,41 +203,46 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold ml-1">Main Category</label>
-                    <select 
-                      value={formData.subCategory || CATEGORY_MAP.find(m => m.subCategories.some(s => s.slug === formData.category))?.slug || ""}
-                      onChange={(e) => {
-                        const mainSlug = e.target.value;
-                        const firstSub = CATEGORY_MAP.find(m => m.slug === mainSlug)?.subCategories[0]?.slug || "";
-                        setFormData((p: any) => ({ ...p, subCategory: mainSlug, category: firstSub }));
-                      }}
-                      className="w-full px-4 py-3 bg-secondary/50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all"
-                    >
-                      <option value="">Select Type</option>
-                      {CATEGORY_MAP.map(m => (
-                        <option key={m.slug} value={m.slug}>{m.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold ml-1">Sub-Category (Real Category)</label>
-                    <select 
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 bg-secondary/50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all"
-                    >
-                      <option value="">Select Category</option>
-                      {CATEGORY_MAP.find(m => m.slug === formData.subCategory || m.subCategories.some(s => s.slug === formData.category))?.subCategories.map(sub => (
-                        <option key={sub.slug} value={sub.slug}>{sub.name}</option>
-                      )) || CATEGORY_MAP.flatMap(m => m.subCategories).map(sub => (
-                        <option key={sub.slug} value={sub.slug}>{sub.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <MultiSelectDropdown
+                    label="Main Category"
+                    placeholder="Select Main Categories"
+                    options={CATEGORY_MAP.map(m => ({ name: m.name, slug: m.slug }))}
+                    selectedValues={formData.subCategory || []}
+                    onChange={(values) => {
+                      setFormData((p: any) => {
+                        const validSubs = CATEGORY_MAP
+                          .filter(m => values.includes(m.slug))
+                          .flatMap(m => m.subCategories.map(s => s.slug));
+                        const newCategory = (p.category || []).filter((c: string) => validSubs.includes(c));
+                        
+                        return {
+                          ...p,
+                          subCategory: values,
+                          category: newCategory
+                        };
+                      });
+                    }}
+                  />
+                  <MultiSelectDropdown
+                    label="Sub-Category (Real Category)"
+                    placeholder="Select Sub-Categories"
+                    options={
+                      (formData.subCategory || []).length > 0
+                        ? CATEGORY_MAP
+                            .filter(m => (formData.subCategory || []).includes(m.slug))
+                            .flatMap(m => m.subCategories)
+                            .map(sub => ({ name: sub.name, slug: sub.slug }))
+                        : CATEGORY_MAP.flatMap(m => m.subCategories).map(sub => ({ name: sub.name, slug: sub.slug }))
+                    }
+                    selectedValues={formData.category || []}
+                    onChange={(values) => {
+                      setFormData((p: any) => ({
+                        ...p,
+                        category: values
+                      }));
+                    }}
+                  />
                 </div>
 
                 <div className="space-y-2">

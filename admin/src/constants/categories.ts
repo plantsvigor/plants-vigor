@@ -47,18 +47,28 @@ export const CATEGORY_MAP = [
     ]
   },
   {
-    name: "Gifts & Others",
-    slug: "gifts-others",
+    name: "Plant Care",
+    slug: "plant-care",
     subCategories: [
-      { name: "Gifts", slug: "gifts" },
-      { name: "Plant Care", slug: "plant-care" },
       { name: "Fertilizers", slug: "fertilizers" },
       { name: "Soil & Media", slug: "soil-media" },
-      { name: "Pest Control", slug: "pest-control" },
-      { name: "Accessories", slug: "accessories" },
+      { name: "Pest Control", slug: "pest-control" }
+    ]
+  },
+  {
+    name: "Accessories",
+    slug: "accessories",
+    subCategories: [
       { name: "Watering Cans", slug: "watering-cans" },
       { name: "Decorative Stones", slug: "decorative-stones" },
-      { name: "Garden Decor", slug: "garden-decor" },
+      { name: "Garden Decor", slug: "garden-decor" }
+    ]
+  },
+  {
+    name: "Gifts",
+    slug: "gifts",
+    subCategories: [
+      { name: "Gifts", slug: "gifts" },
       { name: "Bulk Order", slug: "bulk-order" }
     ]
   }

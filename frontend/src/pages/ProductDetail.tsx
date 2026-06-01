@@ -286,7 +286,12 @@ export default function ProductDetail() {
     ? Number((reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1))
     : (product.rating ?? 0);
   const reviewCount = reviews.length > 0 ? reviews.length : (product.reviewsCount ?? 0);
-  const related = allProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = allProducts.filter(p => {
+    if (p.id === product.id) return false;
+    const pCats = Array.isArray(p.category) ? p.category : p.category ? [p.category] : [];
+    const prodCats = Array.isArray(product.category) ? product.category : product.category ? [product.category] : [];
+    return pCats.some((c: string) => prodCats.includes(c));
+  }).slice(0, 4);
   const isWish = has(product.id);
 
   const submitReview = (e: React.FormEvent) => {

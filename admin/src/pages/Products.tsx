@@ -138,7 +138,9 @@ export default function Products() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-[10px] font-bold uppercase bg-primary/10 text-primary px-3 py-1 rounded-full border border-primary/20">
-                      {product.category || "Uncategorized"}
+                      {Array.isArray(product.category) 
+                        ? product.category.join(", ") 
+                        : (product.category || "Uncategorized")}
                     </span>
                   </td>
                   <td className="px-6 py-4">
