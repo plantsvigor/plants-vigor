@@ -306,7 +306,7 @@ export default function Header() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="hover:bg-transparent hover:scale-[1.2] transition-smooth" aria-label="Account">
+              <Button variant="ghost" size="icon" className="hover:bg-transparent hover:scale-[1.2] transition-smooth focus:outline-none focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none" style={{ outline: "none", boxShadow: "none" }} aria-label="Account">
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
