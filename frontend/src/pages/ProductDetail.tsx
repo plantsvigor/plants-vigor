@@ -99,6 +99,29 @@ const formatDescription = (description: string) => {
   return <div className="space-y-1">{elements}</div>;
 };
 
+const isPlantProduct = (product: any) => {
+  if (!product || !product.category) return false;
+  const cats = Array.isArray(product.category) ? product.category : [product.category];
+  const plantSlugs = [
+    "plants",
+    "indoor-plants",
+    "succulent-plants",
+    "cactus",
+    "air-purifying-plants",
+    "hardy-plants",
+    "adenium-plants",
+    "vastu-plants",
+    "medicinal-plants",
+    "house-plants",
+    "outdoor-plants",
+    "flowering-plants",
+    "summer-plants",
+    "hanging-plants",
+    "plants-for-bathroom"
+  ];
+  return cats.some(c => plantSlugs.includes(c));
+};
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const [product, setProduct] = useState<any>(null);
@@ -180,23 +203,28 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    const isKrish = selectedPlanter === "krish";
+    const isPlant = isPlantProduct(product);
+    const isKrish = isPlant && selectedPlanter === "krish";
     const itemToAdd = {
       ...product,
       id: isKrish ? `${product.id}_krish` : product.id,
-      name: isKrish ? `${product.name} (With Pot)` : `${product.name} (Without Pot)`,
+      name: isKrish ? `${product.name} (With Pot)` : (isPlant ? `${product.name} (Without Pot)` : product.name),
       price: product.price + (isKrish ? 50 : 0),
       discountPrice: (product.discountPrice && product.discountPrice > 0)
         ? product.discountPrice + (isKrish ? 50 : 0)
         : undefined
     };
     add(itemToAdd, 1);
-    toast.success(`${isKrish ? `${product.name} with Pot` : `${product.name} without Pot`} added to cart`);
+    toast.success(isPlant 
+      ? `${isKrish ? `${product.name} with Pot` : `${product.name} without Pot`} added to cart`
+      : `${product.name} added to cart`
+    );
   };
 
   const handleBuyNow = () => {
     if (!product) return;
-    const isKrish = selectedPlanter === "krish";
+    const isPlant = isPlantProduct(product);
+    const isKrish = isPlant && selectedPlanter === "krish";
     const finalProductId = isKrish ? `${product.id}_krish` : product.id;
     const finalPrice = (product.discountPrice && product.discountPrice > 0) 
       ? product.discountPrice + (isKrish ? 50 : 0) 
@@ -209,7 +237,7 @@ export default function ProductDetail() {
           from: "/checkout",
           buyNowItem: {
             productId: finalProductId,
-            name: isKrish ? `${product.name} (With Pot)` : `${product.name} (Without Pot)`,
+            name: isKrish ? `${product.name} (With Pot)` : (isPlant ? `${product.name} (Without Pot)` : product.name),
             price: finalPrice,
             image: product.images[0],
             quantity: 1
@@ -274,7 +302,8 @@ export default function ProductDetail() {
   const baseSellingPrice = (product.discountPrice && product.discountPrice > 0) ? product.discountPrice : product.price;
   const baseOriginalPrice = product.price;
   
-  const additionalPrice = selectedPlanter === "krish" ? 50 : 0;
+  const isPlant = isPlantProduct(product);
+  const additionalPrice = (isPlant && selectedPlanter === "krish") ? 50 : 0;
   
   const sellingPrice = baseSellingPrice + additionalPrice;
   const originalPrice = baseOriginalPrice + additionalPrice;
@@ -413,71 +442,73 @@ export default function ProductDetail() {
           </div>
           
           {/* Select Pot Section */}
-          <div className="mt-6 sm:mt-8">
-            <h3 className="text-[13px] font-bold text-[#004d40] mb-3 uppercase tracking-wider">Select Pot</h3>
-            <div className="flex gap-4 mt-4">
-              {/* Without Pot Option */}
-              <button
-                onClick={() => handlePlanterChange("gropot")}
-                className={cn(
-                  "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
-                  selectedPlanter === "gropot" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
-                )}
-              >
-                {selectedPlanter === "gropot" && (
-                  <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-10 shadow-sm">
-                    <Check className="h-4 w-4 text-white" strokeWidth={3} />
+          {isPlantProduct(product) && (
+            <div className="mt-6 sm:mt-8">
+              <h3 className="text-[13px] font-bold text-[#004d40] mb-3 uppercase tracking-wider">Select Pot</h3>
+              <div className="flex gap-4 mt-4">
+                {/* Without Pot Option */}
+                <button
+                  onClick={() => handlePlanterChange("gropot")}
+                  className={cn(
+                    "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
+                    selectedPlanter === "gropot" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
+                  )}
+                >
+                  {selectedPlanter === "gropot" && (
+                    <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-10 shadow-sm">
+                      <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center gap-3 w-full pl-2">
+                    <div className="h-9 w-9 shrink-0 text-[#004d40]">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-2 14H6L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col items-start flex-1">
+                      <span className="font-medium text-sm text-foreground tracking-wide">Without Pot</span>
+                      <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice)}</span>
+                    </div>
                   </div>
-                )}
-                <div className="flex items-center justify-center gap-3 w-full pl-2">
-                  <div className="h-9 w-9 shrink-0 text-[#004d40]">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-2 14H6L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2" />
-                    </svg>
-                  </div>
-                  <div className="flex flex-col items-start flex-1">
-                    <span className="font-medium text-sm text-foreground tracking-wide">Without Pot</span>
-                    <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice)}</span>
-                  </div>
-                </div>
-              </button>
+                </button>
 
-              {/* With Pot Option */}
-              <button
-                onClick={() => handlePlanterChange("krish")}
-                className={cn(
-                  "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
-                  selectedPlanter === "krish" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
-                )}
-              >
-                {/* Most Loved Badge */}
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FDE68A] text-[#004d40] text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap z-10">
-                  <Heart className="h-2.5 w-2.5 fill-red-500 text-red-500" />
-                  Most Loved
-                </div>
-                
-                {selectedPlanter === "krish" && (
-                  <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-20 shadow-sm">
-                    <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                {/* With Pot Option */}
+                <button
+                  onClick={() => handlePlanterChange("krish")}
+                  className={cn(
+                    "relative flex-1 flex items-center gap-3 rounded-2xl border-2 p-3 transition-all outline-none",
+                    selectedPlanter === "krish" ? "border-[#008744] bg-[#008744]/5" : "border-border hover:border-muted-foreground"
+                  )}
+                >
+                  {/* Most Loved Badge */}
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FDE68A] text-[#004d40] text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1 shadow-sm whitespace-nowrap z-10">
+                    <Heart className="h-2.5 w-2.5 fill-red-500 text-red-500" />
+                    Most Loved
                   </div>
-                )}
-                <div className="flex items-center justify-center gap-3 w-full pl-2 mt-1">
-                  <div className="h-9 w-9 shrink-0 text-[#004d40]">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-1 12H5L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2m-6 13h-4v2h4v-2z" />
-                    </svg>
+                  
+                  {selectedPlanter === "krish" && (
+                    <div className="absolute -top-3 -right-3 bg-[#008744] rounded-full p-1 border-2 border-background z-20 shadow-sm">
+                      <Check className="h-4 w-4 text-white" strokeWidth={3} />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-center gap-3 w-full pl-2 mt-1">
+                    <div className="h-9 w-9 shrink-0 text-[#004d40]">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-full h-full">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16l-1 12H5L4 6zm0 0v-2a1 1 0 011-1h14a1 1 0 011 1v2m-6 13h-4v2h4v-2z" />
+                      </svg>
+                    </div>
+                    <div className="flex flex-col items-start flex-1">
+                      <span className="font-medium text-sm text-foreground tracking-wide">With Pot</span>
+                      <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice + 50)}</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-start flex-1">
-                    <span className="font-medium text-sm text-foreground tracking-wide">With Pot</span>
-                    <span className="font-bold text-[#008744]">{formatINR(baseSellingPrice + 50)}</span>
-                  </div>
-                </div>
-              </button>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="mt-6">
-            {formatDescription(product.description)}
+            {formatDescription(product.shortDescription || product.description)}
           </div>
 
           <div className="fixed bottom-0 left-0 z-50 w-full p-4 md:static md:p-0 mt-6 sm:mt-8 pointer-events-none">

@@ -23,8 +23,9 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
     slug: "",
     price: "",
     discountPrice: "",
-    discountPercentage: "",
+    discountAmount: "",
     description: "",
+    shortDescription: "",
     stock: 10,
     featured: false,
     bestSeller: false,
@@ -38,8 +39,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
 
   useEffect(() => {
     if (product) {
-      const calculatedPct = (product.price && product.discountPrice && product.discountPrice < product.price)
-        ? Math.round((1 - product.discountPrice / product.price) * 100)
+      const calculatedAmt = (product.price && product.discountPrice && product.discountPrice > 0 && product.discountPrice < product.price)
+        ? product.price - product.discountPrice
         : "";
       
       const categoryArray = Array.isArray(product.category)
@@ -58,7 +59,8 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
         ...product,
         price: product.price || "",
         discountPrice: product.discountPrice || "",
-        discountPercentage: calculatedPct,
+        discountAmount: calculatedAmt,
+        shortDescription: product.shortDescription || "",
         category: categoryArray,
         subCategory: subCategoryArray
       });
@@ -69,8 +71,9 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
         slug: "",
         price: "",
         discountPrice: "",
-        discountPercentage: "",
+        discountAmount: "",
         description: "",
+        shortDescription: "",
         stock: 10,
         featured: false,
         bestSeller: false,
@@ -95,13 +98,13 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
         newData.slug = value.toLowerCase().replace(/ /g, "-").replace(/[^\w-]+/g, "");
       }
 
-      if (name === "price" || name === "discountPercentage") {
+      if (name === "price" || name === "discountAmount") {
         const actualPrice = name === "price" ? Number(value) : Number(prev.price);
-        const discountPct = name === "discountPercentage" ? Number(value) : Number(prev.discountPercentage);
+        const disAmount = name === "discountAmount" ? Number(value) : Number(prev.discountAmount);
 
         if (!isNaN(actualPrice) && actualPrice > 0) {
-          if (!isNaN(discountPct) && discountPct > 0) {
-            newData.discountPrice = Math.round(actualPrice * (1 - discountPct / 100));
+          if (!isNaN(disAmount) && disAmount > 0) {
+            newData.discountPrice = Math.max(0, actualPrice - disAmount);
           } else {
             newData.discountPrice = "";
           }
@@ -124,7 +127,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
       dataToSave.discountPrice = Number(dataToSave.discountPrice) || 0;
       dataToSave.stock = Number(dataToSave.stock) || 0;
       
-      delete dataToSave.discountPercentage;
+      delete dataToSave.discountAmount;
 
       // Validation
       if (dataToSave.price <= 0) {
@@ -246,18 +249,18 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold ml-1 text-primary">Discount Percentage (%)</label>
+                  <label className="text-sm font-bold ml-1 text-primary">Discount Amount (₹)</label>
                   <input 
-                    name="discountPercentage"
+                    name="discountAmount"
                     type="text"
-                    value={formData.discountPercentage}
+                    value={formData.discountAmount || ""}
                     onChange={handleChange}
-                    placeholder="e.g. 20 (Percentage off Actual Price)"
+                    placeholder="e.g. 50 (Flat amount off Actual Price)"
                     className="w-full px-4 py-3 bg-primary/10 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all font-bold text-primary"
                   />
-                  {formData.price && formData.discountPercentage && (
+                  {formData.price && formData.discountAmount && Number(formData.discountAmount) > 0 && (
                     <p className="text-xs font-semibold text-muted-foreground ml-1 mt-1">
-                      Calculated Offer Price: <span className="text-primary font-bold">₹{formData.discountPrice}</span> ({formData.discountPercentage}% discount on ₹{formData.price})
+                      Calculated Offer Price: <span className="text-primary font-bold">₹{formData.discountPrice}</span> ({Math.round((Number(formData.discountAmount) / Number(formData.price)) * 100)}% discount on ₹{formData.price})
                     </p>
                   )}
                 </div>
@@ -357,7 +360,19 @@ export const ProductModal = ({ isOpen, onClose, product, onSuccess }: ProductMod
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold ml-1">Description</label>
+                <label className="text-sm font-bold ml-1">Short Description</label>
+                <textarea 
+                  name="shortDescription"
+                  value={formData.shortDescription || ""}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="A short, catchy overview..."
+                  className="w-full px-4 py-3 bg-secondary/50 border-none rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold ml-1">Long Description</label>
                 <textarea 
                   name="description"
                   value={formData.description}

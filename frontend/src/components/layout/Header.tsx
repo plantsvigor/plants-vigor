@@ -181,7 +181,7 @@ export default function Header() {
   const closeMenu = () => setMobileMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur relative">
       {/* Announcement bar */}
 
 
@@ -407,29 +407,39 @@ export default function Header() {
 
       {/* Full-width Mobile Search Overlay */}
       {showSearch && (
-        <div className="absolute inset-0 z-50 flex flex-col bg-background px-4 animate-in fade-in slide-in-from-top-2 duration-200">
-          <form onSubmit={submit} className="flex items-center gap-3 py-4 border-b">
-            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
-            <Input
-              autoFocus
-              value={q}
-              onChange={e => setQ(e.target.value)}
-              placeholder={`Search ${animatedNoun}`}
-              className="flex-1 h-10 border-none bg-transparent focus-visible:ring-0 text-base"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => { setShowSearch(false); setQ(""); }}
-              className="shrink-0 rounded-full"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </form>
+        <>
+          {/* Semi-transparent backdrop to click away and keep background visible */}
+          <div 
+            className="fixed inset-0 z-30 bg-black/20 backdrop-blur-[2px] animate-in fade-in duration-200" 
+            onClick={() => { setShowSearch(false); setQ(""); }} 
+          />
+          
+          {/* Header-bound Search Input Overlay */}
+          <div className="absolute inset-0 z-50 flex items-center bg-background px-4 h-full w-full">
+            <form onSubmit={submit} className="flex items-center gap-3 w-full">
+              <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+              <Input
+                autoFocus
+                value={q}
+                onChange={e => setQ(e.target.value)}
+                placeholder={`Search ${animatedNoun}`}
+                className="flex-1 h-10 border-none bg-transparent focus-visible:ring-0 text-base"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => { setShowSearch(false); setQ(""); }}
+                className="shrink-0 rounded-full"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </form>
+          </div>
 
+          {/* Separate Search Results Dropdown below Header */}
           {debouncedQ.trim().length > 0 && (
-            <div className="flex-1 overflow-y-auto py-4">
+            <div className="absolute top-full left-0 right-0 z-40 border-b border-border bg-background shadow-2xl rounded-b-3xl p-2 max-h-[300px] overflow-y-auto custom-scrollbar animate-in slide-in-from-top-1 duration-200">
               {productsLoading ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">Searching...</div>
               ) : filteredProducts.length === 0 ? (
@@ -437,7 +447,7 @@ export default function Header() {
               ) : (
                 <div className="space-y-1">
                   {filteredProducts
-                    .slice(0, 10)
+                    .slice(0, 15)
                     .map(p => (
                       <Link
                         key={p.id}
@@ -471,7 +481,7 @@ export default function Header() {
               )}
             </div>
           )}
-        </div>
+        </>
       )}
     </header>
   );
